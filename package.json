@@ -1,0 +1,16 @@
+{
+  "name": "com.nevelson.gridplacementsystem",
+  "version": "1.0.0",
+  "displayName": "Grid Placement System",
+  "description": "A lightweight package for setting up a grid and placing items on it.",
+  "unity": "2020.3",
+  "dependencies": {
+    "com.unity.test-framework": "1.1.31"
+  },
+  "keywords": [ "Grid", "Placement", "Builder" ],
+  "author": {
+    "name": "Nicholas Evelson",
+    "email": "runefindergamedev@gmail.com",
+    "url": "https://store.steampowered.com/app/1481840/Frisbros/"
+  }
+}
