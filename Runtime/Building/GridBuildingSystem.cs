@@ -11,8 +11,9 @@ namespace Nevelson.GridPlacementSystem
         [SerializeField] int _gridHeight = 10;
         [SerializeField] float _cellSize = 1;
         [SerializeField] Vector3 _gridStartingPosition = Vector3.zero;
-        [SerializeField] bool isDebug = true;
+        [SerializeField] bool _isDebug = true;
         [SerializeField] GameObject _buildingSoundPrefab;
+        [SerializeField] GameObject _worldGridSprite;
 
         GameObject _buildingSoundGO = null;
         GridPlacementObjectSO selectedGridObjectSO;
@@ -53,7 +54,16 @@ namespace Nevelson.GridPlacementSystem
                 _cellSize,
                 _gridStartingPosition,
                 (Grid<GridObject> g, int x, int z) =>
-                new GridObject(g, x, z), isDebug);
+                new GridObject(g, x, z), _isDebug);
+
+            for (int x = 0; x < _gridWidth; x++)
+            {
+                for (int y = 0; y < _gridHeight; y++)
+                {
+                    GameObject tile = Instantiate(_worldGridSprite, transform);
+                    tile.transform.localPosition = grid.GetWorldPosition(x, y);
+                }
+            }
         }
 
         void Update()
@@ -66,20 +76,33 @@ namespace Nevelson.GridPlacementSystem
             SelectObjectTwo();
         }
 
+        public bool CheckSurroundingSpace()
+        {
+            grid.GetXY(GetMouseWorldPosition(), out int x, out int y);
+            Vector2Int placedObjectOrigin = new Vector2Int(x, y);
+            List<Vector2Int> gridPositionList = selectedGridObjectSO.GetGridPositionList(placedObjectOrigin, dir);
+            foreach (Vector2Int gridPosition in gridPositionList)
+            {
+                //if the surrounding tile is outside grid bounds or can't build
+                GridObject gridObj = grid.GetGridObject(gridPosition.x, gridPosition.y);
+                if (gridObj == null || !gridObj.CanBuild()) return false;
+            }
+            return true;
+        }
+
         void Build()
         {
             if (!Input.GetMouseButtonDown(0)) return;
             if (selectedGridObjectSO == null) return;
 
-            grid.GetXY(GetMouseWorldPosition(), out int x, out int y);
-            Vector2Int placedObjectOrigin = new Vector2Int(x, y);
-            List<Vector2Int> gridPositionList = selectedGridObjectSO.GetGridPositionList(placedObjectOrigin, dir);
-
-            if (!CheckSurroundingSpace(gridPositionList))
+            if (!CheckSurroundingSpace())
             {
                 Debug.Log("Can't build, space already taken");
                 return;
             }
+
+            grid.GetXY(GetMouseWorldPosition(), out int x, out int y);
+            Vector2Int placedObjectOrigin = new Vector2Int(x, y);
 
             Vector2Int rotationOffset = selectedGridObjectSO.GetRotationOffset(dir);
             Vector3 placedObjectWorldPosition = grid.GetWorldPosition(x, y) +
@@ -94,7 +117,8 @@ namespace Nevelson.GridPlacementSystem
             //this rotates the sprite a bit more for 2D
             placedObject.transform.rotation = Quaternion.Euler(0, 0, -selectedGridObjectSO.GetRotationAngle(dir));
 
-            //populate other tiles that take up the dimensions of the obkect with info that they are taken
+            //populate other tiles that take up the dimensions of the object with info that they are taken
+            List<Vector2Int> gridPositionList = selectedGridObjectSO.GetGridPositionList(placedObjectOrigin, dir);
             foreach (Vector2Int gridPosition in gridPositionList)
             {
                 grid.GetGridObject(gridPosition.x, gridPosition.y).SetPlacedObject(placedObject);
@@ -159,17 +183,6 @@ namespace Nevelson.GridPlacementSystem
             RefreshSelectedObjectType();
         }
 
-        bool CheckSurroundingSpace(List<Vector2Int> gridPositionList)
-        {
-            foreach (Vector2Int gridPosition in gridPositionList)
-            {
-                //if the surrounding tile is outside grid bounds or can't build
-                GridObject gridObj = grid.GetGridObject(gridPosition.x, gridPosition.y);
-                if (gridObj == null || !gridObj.CanBuild()) return false;
-            }
-            return true;
-        }
-
         Vector3 GetMouseWorldPosition()
         {
             Vector3 vec = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -179,6 +192,7 @@ namespace Nevelson.GridPlacementSystem
 
         void RefreshSelectedObjectType()
         {
+
             OnSelectedChanged?.Invoke(this, EventArgs.Empty);
         }
     }

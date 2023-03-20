@@ -53,7 +53,7 @@ namespace Nevelson.GridPlacementSystem
                          null,
                          $"{x},{y}",
                          GetWorldPosition(x, y) + (new Vector3(cellSize, cellSize, 0) * .5f), //centers the textmesh
-                         5,
+                         2,
                          Color.white);
                         Debug.DrawLine(GetWorldPosition(x, y), GetWorldPosition(x, y + 1), Color.white, 1000f);
                         Debug.DrawLine(GetWorldPosition(x, y), GetWorldPosition(x + 1, y), Color.white, 1000f);
