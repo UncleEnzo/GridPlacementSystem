@@ -6,7 +6,6 @@ namespace Nevelson.GridPlacementSystem
     [CreateAssetMenu(fileName = "PlacementObject", menuName = "Building")]
     public class GridPlacementObjectSO : ScriptableObject
     {
-
         public static Dir GetNextDir(Dir dir)
         {
             switch (dir)
@@ -29,7 +28,7 @@ namespace Nevelson.GridPlacementSystem
 
         public string nameString;
         public Transform prefab;
-        public Transform visual;
+        public Transform ghost;
         public int width;
         public int height;
 

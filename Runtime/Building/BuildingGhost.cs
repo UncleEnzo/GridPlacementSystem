@@ -33,11 +33,11 @@ namespace Nevelson.GridPlacementSystem
                 visual = null;
             }
 
-            GridPlacementObjectSO placedObjectTypeSO = GridBuildingSystem.Instance.GetPlacedObjectTypeSO();
+            GridPlacementObjectSO placedObjectTypeSO = GridBuildingSystem.Instance.SelectedGridObject;
 
             if (placedObjectTypeSO != null)
             {
-                visual = Instantiate(placedObjectTypeSO.visual, Vector3.zero, Quaternion.identity);
+                visual = Instantiate(placedObjectTypeSO.ghost, Vector3.zero, Quaternion.identity);
                 visual.parent = transform;
                 visual.localPosition = Vector3.zero;
                 visual.localEulerAngles = Vector3.zero;

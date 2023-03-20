@@ -27,9 +27,9 @@ namespace Nevelson.GridPlacementSystem
 
         void Setup(GridPlacementObjectSO placedObjectTypeSO, Vector2Int origin, GridPlacementObjectSO.Dir dir)
         {
-            this._gridObjectSO = placedObjectTypeSO;
-            this._origin = origin;
-            this._dir = dir;
+            _gridObjectSO = placedObjectTypeSO;
+            _origin = origin;
+            _dir = dir;
         }
 
         public List<Vector2Int> GetGridPositionList()

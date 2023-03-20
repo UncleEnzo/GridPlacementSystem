@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c01229f3ad9b00043ba3b9eb8f95fb75, type: 3}
   m_Name: BigHouse
   m_EditorClassIdentifier: 
-  nameString: Big House
+  nameString: BH
   prefab: {fileID: 9179346414099677398, guid: d3dd5ef19e8c0ac4193eee2cb6b28ce0, type: 3}
-  visual: {fileID: 9179346414099677398, guid: d3dd5ef19e8c0ac4193eee2cb6b28ce0, type: 3}
+  ghost: {fileID: 9179346414099677398, guid: 6a7e1590417694f4b9dd273a66d6e631, type: 3}
   width: 4
   height: 4

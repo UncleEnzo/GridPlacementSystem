@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c01229f3ad9b00043ba3b9eb8f95fb75, type: 3}
   m_Name: Market
   m_EditorClassIdentifier: 
-  nameString: market
+  nameString: M
   prefab: {fileID: 7376595715133753744, guid: d5f2f8f7e5b9af6448f774bbdb46ec7b, type: 3}
-  visual: {fileID: 7376595715133753744, guid: d5f2f8f7e5b9af6448f774bbdb46ec7b, type: 3}
+  ghost: {fileID: 7376595715133753744, guid: 1c02eada1d088534b86b7626623cfd13, type: 3}
   width: 3
   height: 2
