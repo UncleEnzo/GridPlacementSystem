@@ -9,7 +9,7 @@ namespace Nevelson.GridPlacementSystem
         enum BuildMode { BUILD, MOVE, DEMOLISH }
 
         [SerializeField] BuildMode buildMode = BuildMode.BUILD;
-        [SerializeField] bool _showGrid = false;
+        [SerializeField] bool _displayGridOnStart = false;
         [SerializeField] List<GridPlacementObjectSO> _gridObjects;
         [SerializeField] int _gridWidth = 15;
         [SerializeField] int _gridHeight = 10;
@@ -22,53 +22,196 @@ namespace Nevelson.GridPlacementSystem
 
         GameObject _buildingGhost;
         GameObject _buildingSoundGO = null;
-        GridPlacementObjectSO selectedGridObjectSO;
-        Grid<GridObject> grid;
-        GridPlacementObjectSO.Dir dir = GridPlacementObjectSO.Dir.Down;
-        PlacedObjectData lastDemolish = null;
-        bool movingObject = false;
+        GridPlacementObjectSO _selectedGridObjectSO;
+        Grid<GridObject> _grid;
+        GridPlacementObjectSO.Dir _dir = GridPlacementObjectSO.Dir.Down;
+        PlacedObjectData _lastDemolish = null;
+        bool _isGridDisplayed = false;
+        bool _movingObject = false;
 
         public event EventHandler OnSelectedChanged;
         public event EventHandler OnObjectPlaced;
-        public GridPlacementObjectSO SelectedGridObject { get => selectedGridObjectSO; }
+        public GridPlacementObjectSO SelectedGridObject { get => _selectedGridObjectSO; }
 
-        public void DisplayGrid(bool isDisplayed)
+        public enum BuildAction
         {
-            _showGrid = isDisplayed;
-            _buildingGhost.SetActive(_showGrid);
-            foreach (Transform child in transform)
-            {
-                child.gameObject.SetActive(_showGrid);
-            }
-            SetBuildMode(BuildMode.BUILD);
+            DISPLAY_GRID,
+            HIDE_GRID,
+            SET_BUILD_MODE,
+            SET_DEMOLISH_MODE,
+            SET_MOVE_MODE,
+            ACCEPT_BUTTON,
+            UNDO_BUTTON,
+            ROTATE,
+            SELECT_GRID_OBJECT,
         }
 
+        public void ChangeGridObjectToPlace(int gridObjectIndex)
+        {
+            PerformBuildAction(BuildAction.SELECT_GRID_OBJECT, gridObjectIndex);
+        }
+
+        public void PerformBuildAction(BuildAction buildAction)
+        {
+            if (buildAction == BuildAction.SELECT_GRID_OBJECT)
+            {
+                Debug.LogError("To perform Select Grid Object, call ChangeGridObjectToPlace Function instead");
+                return;
+            }
+            PerformBuildAction(buildAction, -2);
+        }
+
+        void PerformBuildAction(BuildAction buildAction, int gridObjectIndex)
+        {
+            //-1 == Deselect Grid object
+            //-2 == Performing an action other than SelectGridObject and don't need index
+            if (gridObjectIndex <= -3 || gridObjectIndex > _gridObjects.Count - 1)
+            {
+                Debug.LogError($"{gridObjectIndex} is not out of bounds of the _gridObjects list");
+                return;
+            }
+
+            if (buildAction == BuildAction.DISPLAY_GRID)
+            {
+                Debug.Log("Displaying grid");
+                DisplayGrid(true);
+                return;
+            }
+            if (buildAction == BuildAction.HIDE_GRID)
+            {
+                Debug.Log("Hiding grid");
+                DisplayGrid(false);
+                return;
+            }
+
+            if (!_isGridDisplayed)
+            {
+                Debug.LogWarning($"Not performing action {buildAction} because grid is not displayed");
+                return;
+            }
+
+            if (_selectedGridObjectSO == null)
+            {
+                Debug.Log("Resetting rotation");
+                ResetRotation();
+            }
+
+            if (buildAction == BuildAction.SET_BUILD_MODE)
+            {
+                Debug.Log("Setting mode to Build Mode");
+                SetBuildMode(BuildMode.BUILD);
+                return;
+            }
+
+            if (buildAction == BuildAction.SET_DEMOLISH_MODE)
+            {
+                Debug.Log("Setting mode to Demolish Mode");
+                SetBuildMode(BuildMode.DEMOLISH);
+                return;
+            }
+
+            if (buildAction == BuildAction.SET_MOVE_MODE)
+            {
+                Debug.Log("Setting mode to Move Mode");
+                SetBuildMode(BuildMode.MOVE);
+                return;
+            }
+
+            switch (buildMode)
+            {
+                case BuildMode.BUILD:
+                    if (buildAction == BuildAction.ACCEPT_BUTTON)
+                    {
+                        Debug.Log($"Build Mode is: {buildMode}, performing build action");
+                        Build();
+                        break;
+                    }
+                    if (buildAction == BuildAction.ROTATE)
+                    {
+                        Debug.Log($"Build Mode is: {buildMode}, performing rotate");
+                        Rotate();
+                        break;
+                    }
+                    if (buildAction == BuildAction.SELECT_GRID_OBJECT)
+                    {
+                        if (gridObjectIndex == -1)
+                        {
+                            Debug.Log($"Build Mode is: {buildMode}, Deselecting grid object");
+                            DeselectBuildObject();
+                            break;
+                        }
+
+                        Debug.Log($"Build Mode is: {buildMode}, Selecting grid object: {gridObjectIndex}");
+                        SelectGridObject(gridObjectIndex);
+                        break;
+                    }
+                    break;
+                case BuildMode.MOVE:
+                    if (!_movingObject && buildAction == BuildAction.ACCEPT_BUTTON)
+                    {
+                        Debug.Log($"Build Mode is: {buildMode}, selecting object to move");
+                        SelectMoveObject();
+                        break;
+                    }
+                    if (_movingObject && buildAction == BuildAction.ACCEPT_BUTTON)
+                    {
+                        Debug.Log($"Build Mode is: {buildMode}, moving selected object");
+                        Move();
+                        break;
+                    }
+                    if (_movingObject && buildAction == BuildAction.UNDO_BUTTON)
+                    {
+                        Debug.Log($"Build Mode is: {buildMode}, cancelling move");
+                        UndoSelectedMoveObject();
+                        DeselectBuildObject();
+                        break;
+                    }
+                    if (_movingObject && buildAction == BuildAction.ROTATE)
+                    {
+                        Debug.Log($"Build Mode is: {buildMode}, rotating object");
+                        Rotate();
+                        break;
+                    }
+                    break;
+                case BuildMode.DEMOLISH:
+                    if (buildAction == BuildAction.ACCEPT_BUTTON)
+                    {
+                        Debug.Log($"Build Mode is: {buildMode}, performing Demolish");
+                        Demolish();
+                        break;
+                    }
+                    break;
+                default:
+                    Debug.LogError("Build mode doesn't exist");
+                    break;
+            }
+        }
         public Vector3 GetMouseWorldSnappedPosition()
         {
             Vector3 mousePosition = GetMouseWorldPosition();
-            if (selectedGridObjectSO == null) return mousePosition;
+            if (_selectedGridObjectSO == null) return mousePosition;
 
-            grid.GetXY(mousePosition, out int x, out int y);
-            Vector2Int rotationOffset = selectedGridObjectSO.GetRotationOffset(dir);
-            Vector3 placedObjectWorldPosition = grid.GetWorldPosition(x, y) + new Vector3(rotationOffset.x, rotationOffset.y) * grid.CellSize;
+            _grid.GetXY(mousePosition, out int x, out int y);
+            Vector2Int rotationOffset = _selectedGridObjectSO.GetRotationOffset(_dir);
+            Vector3 placedObjectWorldPosition = _grid.GetWorldPosition(x, y) + new Vector3(rotationOffset.x, rotationOffset.y) * _grid.CellSize;
             return placedObjectWorldPosition;
         }
 
         public Quaternion GetPlacedObjectRotation()
         {
-            return selectedGridObjectSO == null ?
+            return _selectedGridObjectSO == null ?
                 Quaternion.identity :
-                Quaternion.Euler(0, 0, -selectedGridObjectSO.GetRotationAngle(dir));
+                Quaternion.Euler(0, 0, -_selectedGridObjectSO.GetRotationAngle(_dir));
         }
         public bool CheckSurroundingSpace()
         {
-            grid.GetXY(GetMouseWorldPosition(), out int x, out int y);
+            _grid.GetXY(GetMouseWorldPosition(), out int x, out int y);
             Vector2Int placedObjectOrigin = new Vector2Int(x, y);
-            List<Vector2Int> gridPositionList = selectedGridObjectSO.GetGridPositionList(placedObjectOrigin, dir);
+            List<Vector2Int> gridPositionList = _selectedGridObjectSO.GetGridPositionList(placedObjectOrigin, _dir);
             foreach (Vector2Int gridPosition in gridPositionList)
             {
                 //if the surrounding tile is outside grid bounds or can't build
-                GridObject gridObj = grid.GetGridObject(gridPosition.x, gridPosition.y);
+                GridObject gridObj = _grid.GetGridObject(gridPosition.x, gridPosition.y);
                 if (gridObj == null || !gridObj.CanBuild()) return false;
             }
             return true;
@@ -76,8 +219,8 @@ namespace Nevelson.GridPlacementSystem
 
         void Awake()
         {
-            selectedGridObjectSO = _gridObjects[0];
-            grid = new Grid<GridObject>(
+            _selectedGridObjectSO = _gridObjects[0];
+            _grid = new Grid<GridObject>(
                 _gridWidth,
                 _gridHeight,
                 _cellSize,
@@ -86,12 +229,23 @@ namespace Nevelson.GridPlacementSystem
                 new GridObject(g, x, z), _isDebug);
             CreateBuildingGhost();
             GenerateWorldTiles();
-            DisplayGrid(_showGrid);
+            DisplayGrid(_displayGridOnStart);
         }
 
         void OnApplicationQuit()
         {
             DisplayGrid(false);
+        }
+
+        void DisplayGrid(bool isGridDisplayed)
+        {
+            _isGridDisplayed = isGridDisplayed;
+            _buildingGhost.SetActive(_isGridDisplayed);
+            foreach (Transform child in transform)
+            {
+                child.gameObject.SetActive(_isGridDisplayed);
+            }
+            SetBuildMode(BuildMode.BUILD);
         }
 
         void CreateBuildingGhost()
@@ -107,59 +261,18 @@ namespace Nevelson.GridPlacementSystem
                 for (int y = 0; y < _gridHeight; y++)
                 {
                     GameObject tile = Instantiate(_worldGridSprite, transform);
-                    tile.transform.localPosition = grid.GetWorldPosition(x, y);
+                    tile.transform.localPosition = _grid.GetWorldPosition(x, y);
                 }
-            }
-        }
-
-        void Update()
-        {
-            if (!_showGrid) return;
-
-            if (selectedGridObjectSO == null) ResetRotation();
-
-            if (Input.GetKeyDown(KeyCode.B)) SetBuildMode(BuildMode.BUILD);
-            if (Input.GetKeyDown(KeyCode.D)) SetBuildMode(BuildMode.DEMOLISH);
-            if (Input.GetKeyDown(KeyCode.M)) SetBuildMode(BuildMode.MOVE);
-
-            switch (buildMode)
-            {
-                case BuildMode.BUILD:
-                    if (Input.GetMouseButtonDown(0)) Build();
-                    if (Input.GetKeyDown(KeyCode.R)) Rotate();
-                    if (Input.GetKeyDown(KeyCode.Alpha1)) SelectGridObject(0);
-                    if (Input.GetKeyDown(KeyCode.Alpha2)) SelectGridObject(1);
-                    if (Input.GetKeyDown(KeyCode.Alpha0)) DeselectBuildObject();
-                    break;
-                case BuildMode.MOVE:
-                    if (!movingObject && Input.GetMouseButtonDown(0))
-                    {
-                        SelectMoveObject();
-                        break;
-                    }
-                    if (movingObject && Input.GetMouseButtonDown(0))
-                    {
-                        Move();
-                        break;
-                    }
-                    if (movingObject && Input.GetKeyDown(KeyCode.R))
-                    {
-                        Rotate();
-                        break;
-                    }
-                    break;
-                case BuildMode.DEMOLISH:
-                    if (Input.GetMouseButtonDown(0)) Demolish();
-                    break;
-                default:
-                    Debug.LogError("Build mode doesn't exist");
-                    break;
             }
         }
 
         void SetBuildMode(BuildMode buildMode)
         {
-            if (this.buildMode == buildMode) return;
+            if (this.buildMode == buildMode)
+            {
+                Debug.Log($"Not setting build mode because mode is already {buildMode}");
+                return;
+            }
             this.buildMode = buildMode;
             switch (buildMode)
             {
@@ -185,9 +298,9 @@ namespace Nevelson.GridPlacementSystem
 
         void SelectMoveObject()
         {
-            if (movingObject) return;
-            grid.GetXY(GetMouseWorldPosition(), out int x, out int y);
-            GridObject gridObject = grid.GetGridObject(x, y);
+            if (_movingObject) return;
+            _grid.GetXY(GetMouseWorldPosition(), out int x, out int y);
+            GridObject gridObject = _grid.GetGridObject(x, y);
             if (gridObject.PlacedObject == null)
             {
                 Debug.Log("Did not find object to move");
@@ -203,30 +316,29 @@ namespace Nevelson.GridPlacementSystem
             });
             SelectGridObject(index);
             Demolish();
-            movingObject = true;
+            _movingObject = true;
         }
 
-        //need to call this when the application closes too
         void UndoSelectedMoveObject()
         {
-            if (!movingObject) return;
+            if (!_movingObject) return;
             Debug.Log("Deselecting object to move");
             DeselectBuildObject();
             UndoLastDemolish();
-            movingObject = false;
+            _movingObject = false;
         }
 
         void Move()
         {
             if (!Build()) return;
-            movingObject = false;
-            lastDemolish = null;
+            _movingObject = false;
+            _lastDemolish = null;
             DeselectBuildObject();
         }
 
         bool Build()
         {
-            if (selectedGridObjectSO == null) return false;
+            if (_selectedGridObjectSO == null) return false;
 
             if (!CheckSurroundingSpace())
             {
@@ -234,27 +346,27 @@ namespace Nevelson.GridPlacementSystem
                 return false;
             }
 
-            grid.GetXY(GetMouseWorldPosition(), out int x, out int y);
+            _grid.GetXY(GetMouseWorldPosition(), out int x, out int y);
             Vector2Int placedObjectOrigin = new Vector2Int(x, y);
 
-            Vector2Int rotationOffset = selectedGridObjectSO.GetRotationOffset(dir);
-            Vector3 placedObjectWorldPosition = grid.GetWorldPosition(x, y) +
-                new Vector3(rotationOffset.x, rotationOffset.y) * grid.CellSize;
+            Vector2Int rotationOffset = _selectedGridObjectSO.GetRotationOffset(_dir);
+            Vector3 placedObjectWorldPosition = _grid.GetWorldPosition(x, y) +
+                new Vector3(rotationOffset.x, rotationOffset.y) * _grid.CellSize;
 
             PlacedObject placedObject = PlacedObject.Create(
                 placedObjectWorldPosition,
                 placedObjectOrigin,
-                dir,
-                selectedGridObjectSO);
+                _dir,
+                _selectedGridObjectSO);
 
             //this rotates the sprite a bit more for 2D
-            placedObject.transform.rotation = Quaternion.Euler(0, 0, -selectedGridObjectSO.GetRotationAngle(dir));
+            placedObject.transform.rotation = Quaternion.Euler(0, 0, -_selectedGridObjectSO.GetRotationAngle(_dir));
 
             //populate other tiles that take up the dimensions of the object with info that they are taken
-            List<Vector2Int> gridPositionList = selectedGridObjectSO.GetGridPositionList(placedObjectOrigin, dir);
+            List<Vector2Int> gridPositionList = _selectedGridObjectSO.GetGridPositionList(placedObjectOrigin, _dir);
             foreach (Vector2Int gridPosition in gridPositionList)
             {
-                grid.GetGridObject(gridPosition.x, gridPosition.y).SetPlacedObject(placedObject);
+                _grid.GetGridObject(gridPosition.x, gridPosition.y).SetPlacedObject(placedObject);
             }
 
             if (_buildingSoundGO == null)
@@ -270,39 +382,37 @@ namespace Nevelson.GridPlacementSystem
             return true;
         }
 
-
-
         void Demolish()
         {
-            GridObject gridObject = grid.GetGridObject(GetMouseWorldPosition());
+            GridObject gridObject = _grid.GetGridObject(GetMouseWorldPosition());
             PlacedObject placedObject = gridObject.PlacedObject;
             if (placedObject == null) return;
 
-            lastDemolish = gridObject.PlacedObject.GetData();
+            _lastDemolish = gridObject.PlacedObject.GetData();
             placedObject.DestroySelf();
             List<Vector2Int> gridPositionList = placedObject.GetGridPositionList();
             foreach (Vector2Int gridPosition in gridPositionList)
             {
-                grid.GetGridObject(gridPosition.x, gridPosition.y).ClearPlacedObject();
+                _grid.GetGridObject(gridPosition.x, gridPosition.y).ClearPlacedObject();
             }
         }
 
         void UndoLastDemolish()
         {
-            if (lastDemolish == null)
+            if (_lastDemolish == null)
             {
                 Debug.Log("No last demolish found");
                 return;
             }
             Debug.Log("Undoing last demolish");
-            Vector2Int placedObjectOrigin = lastDemolish.Origin;
-            var selectedGridObjectSO = lastDemolish.GridObjectSO;
-            var dir = lastDemolish.Dir;
+            Vector2Int placedObjectOrigin = _lastDemolish.Origin;
+            var selectedGridObjectSO = _lastDemolish.GridObjectSO;
+            var dir = _lastDemolish.Dir;
 
 
             Vector2Int rotationOffset = selectedGridObjectSO.GetRotationOffset(dir);
-            Vector3 placedObjectWorldPosition = grid.GetWorldPosition(placedObjectOrigin.x, placedObjectOrigin.y) +
-                new Vector3(rotationOffset.x, rotationOffset.y) * grid.CellSize;
+            Vector3 placedObjectWorldPosition = _grid.GetWorldPosition(placedObjectOrigin.x, placedObjectOrigin.y) +
+                new Vector3(rotationOffset.x, rotationOffset.y) * _grid.CellSize;
 
 
             PlacedObject placedObject = PlacedObject.Create(
@@ -318,33 +428,33 @@ namespace Nevelson.GridPlacementSystem
             List<Vector2Int> gridPositionList = selectedGridObjectSO.GetGridPositionList(placedObjectOrigin, dir);
             foreach (Vector2Int gridPosition in gridPositionList)
             {
-                grid.GetGridObject(gridPosition.x, gridPosition.y).SetPlacedObject(placedObject);
+                _grid.GetGridObject(gridPosition.x, gridPosition.y).SetPlacedObject(placedObject);
             }
 
             OnObjectPlaced?.Invoke(this, EventArgs.Empty);
-            lastDemolish = null;
+            _lastDemolish = null;
         }
 
         void Rotate()
         {
-            dir = GridPlacementObjectSO.GetNextDir(dir);
+            _dir = GridPlacementObjectSO.GetNextDir(_dir);
         }
 
         void SelectGridObject(int i)
         {
-            selectedGridObjectSO = _gridObjects[i];
+            _selectedGridObjectSO = _gridObjects[i];
             RefreshSelectedObjectType();
         }
 
         void DeselectBuildObject()
         {
-            selectedGridObjectSO = null;
+            _selectedGridObjectSO = null;
             RefreshSelectedObjectType();
         }
 
         void ResetRotation()
         {
-            while (dir != GridPlacementObjectSO.Dir.Down)
+            while (_dir != GridPlacementObjectSO.Dir.Down)
             {
                 Debug.Log("Resetting rotate position");
                 Rotate();

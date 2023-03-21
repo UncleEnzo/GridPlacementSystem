@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Nevelson.GridPlacementSystem
 {
@@ -9,6 +10,9 @@ namespace Nevelson.GridPlacementSystem
         Grid<StringGridObject> _stringGrid;
 
         [SerializeField] HeatMapGenericVisual heatmapVisual;
+
+        [SerializeField] UnityEvent _buildButtonDown;
+        [SerializeField] UnityEvent _rotateButtonUp;
 
 
         void Start()
@@ -25,15 +29,60 @@ namespace Nevelson.GridPlacementSystem
 
         void Update()
         {
-            if (Input.GetKeyDown(KeyCode.A))
+            if (Input.GetKeyDown(KeyCode.D))
             {
-                Debug.Log("Hiding Grid");
-                gbs.DisplayGrid(false);
+                gbs.PerformBuildAction(GridBuildingSystem.BuildAction.DISPLAY_GRID);
             }
-            if (Input.GetKeyDown(KeyCode.C))
+
+            if (Input.GetKeyDown(KeyCode.H))
             {
-                Debug.Log("Showing Grid");
-                gbs.DisplayGrid(true);
+                gbs.PerformBuildAction(GridBuildingSystem.BuildAction.HIDE_GRID);
+            }
+
+            if (Input.GetKeyDown(KeyCode.B))
+            {
+                gbs.PerformBuildAction(GridBuildingSystem.BuildAction.SET_BUILD_MODE);
+            }
+
+            //D is for display so I just changed it
+            if (Input.GetKeyDown(KeyCode.G))
+            {
+                gbs.PerformBuildAction(GridBuildingSystem.BuildAction.SET_DEMOLISH_MODE);
+            }
+
+            if (Input.GetKeyDown(KeyCode.M))
+            {
+                gbs.PerformBuildAction(GridBuildingSystem.BuildAction.SET_MOVE_MODE);
+            }
+
+            if (Input.GetMouseButtonDown(0))
+            {
+                gbs.PerformBuildAction(GridBuildingSystem.BuildAction.ACCEPT_BUTTON);
+            }
+
+            if (Input.GetMouseButtonDown(1))
+            {
+                gbs.PerformBuildAction(GridBuildingSystem.BuildAction.UNDO_BUTTON);
+            }
+
+            if (Input.GetKeyDown(KeyCode.R))
+            {
+                gbs.PerformBuildAction(GridBuildingSystem.BuildAction.ROTATE);
+            }
+
+            if (Input.GetKeyDown(KeyCode.Alpha0))
+            {
+                gbs.ChangeGridObjectToPlace(-1);
+            }
+
+            if (Input.GetKeyDown(KeyCode.Alpha1))
+            {
+                gbs.ChangeGridObjectToPlace(0);
+            }
+
+            if (Input.GetKeyDown(KeyCode.Alpha2))
+            {
+                gbs.ChangeGridObjectToPlace(1);
             }
 
             //Vector3 pos = GetMouseWorldPosition();
@@ -48,11 +97,11 @@ namespace Nevelson.GridPlacementSystem
             //if (Input.GetKeyDown(KeyCode.Alpha1)) _stringGrid.GetGridObject(pos).AddNumber("1");
         }
 
-        Vector3 GetMouseWorldPosition()
-        {
-            Vector3 vec = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            vec.z = 0f;
-            return vec;
-        }
+        //Vector3 GetMouseWorldPosition()
+        //{
+        //    Vector3 vec = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        //    vec.z = 0f;
+        //    return vec;
+        //}
     }
 }

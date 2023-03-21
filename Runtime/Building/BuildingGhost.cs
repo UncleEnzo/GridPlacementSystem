@@ -57,8 +57,11 @@ namespace Nevelson.GridPlacementSystem
             GridPlacementObjectSO placedObjectTypeSO = gbs.SelectedGridObject;
             if (placedObjectTypeSO == null)
             {
-                Destroy(visual.gameObject);
-                visual = null;
+                if (visual != null)
+                {
+                    Destroy(visual.gameObject);
+                    visual = null;
+                }
                 return;
             }
 
