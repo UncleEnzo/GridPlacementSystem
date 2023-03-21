@@ -15,5 +15,5 @@ MonoBehaviour:
   nameString: BH
   prefab: {fileID: 9179346414099677398, guid: d3dd5ef19e8c0ac4193eee2cb6b28ce0, type: 3}
   ghost: {fileID: 9179346414099677398, guid: 6a7e1590417694f4b9dd273a66d6e631, type: 3}
-  width: 4
-  height: 4
+  width: 7
+  height: 8

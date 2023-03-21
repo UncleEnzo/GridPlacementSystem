@@ -7,17 +7,23 @@ namespace Nevelson.GridPlacementSystem
         [SerializeField] Material canPlace;
         [SerializeField] Material cannotPlace;
         Transform visual = null;
+        GridBuildingSystem gbs;
         Vector3 lastTargetPosition;
+
+        public void Init(GridBuildingSystem gbs)
+        {
+            this.gbs = gbs;
+        }
 
         void Start()
         {
             RefreshVisual();
-            GridBuildingSystem.Instance.OnSelectedChanged += Instance_OnSelectedChanged;
+            gbs.OnSelectedChanged += Instance_OnSelectedChanged;
         }
 
         void LateUpdate()
         {
-            Vector3 targetPosition = GridBuildingSystem.Instance.GetMouseWorldSnappedPosition();
+            Vector3 targetPosition = gbs.GetMouseWorldSnappedPosition();
             if (lastTargetPosition == null || targetPosition != lastTargetPosition)
             {
                 SetGhostColor();
@@ -30,13 +36,14 @@ namespace Nevelson.GridPlacementSystem
         void Animate(Vector3 targetPosition)
         {
             transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * 15f);
-            transform.rotation = Quaternion.Lerp(transform.rotation, GridBuildingSystem.Instance.GetPlacedObjectRotation(), Time.deltaTime * 15f);
+            transform.rotation = Quaternion.Lerp(transform.rotation, gbs.GetPlacedObjectRotation(), Time.deltaTime * 15f);
         }
 
         void SetGhostColor()
         {
+            if (visual == null) return;
             var sr = visual.GetComponentInChildren<SpriteRenderer>();
-            sr.material = GridBuildingSystem.Instance.CheckSurroundingSpace() ?
+            sr.material = gbs.CheckSurroundingSpace() ?
                 canPlace : cannotPlace;
         }
 
@@ -47,22 +54,25 @@ namespace Nevelson.GridPlacementSystem
 
         void RefreshVisual()
         {
+            GridPlacementObjectSO placedObjectTypeSO = gbs.SelectedGridObject;
+            if (placedObjectTypeSO == null)
+            {
+                Destroy(visual.gameObject);
+                visual = null;
+                return;
+            }
+
             if (visual != null)
             {
                 Destroy(visual.gameObject);
                 visual = null;
             }
 
-            GridPlacementObjectSO placedObjectTypeSO = GridBuildingSystem.Instance.SelectedGridObject;
-
-            if (placedObjectTypeSO != null)
-            {
-                visual = Instantiate(placedObjectTypeSO.ghost, Vector3.zero, Quaternion.identity);
-                visual.parent = transform;
-                visual.localPosition = Vector3.zero;
-                visual.localEulerAngles = Vector3.zero;
-                SetGhostColor();
-            }
+            visual = Instantiate(placedObjectTypeSO.ghost, Vector3.zero, Quaternion.identity);
+            visual.parent = transform;
+            visual.localPosition = Vector3.zero;
+            visual.localEulerAngles = Vector3.zero;
+            SetGhostColor();
         }
     }
 }

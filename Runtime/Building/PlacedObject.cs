@@ -5,9 +5,9 @@ namespace Nevelson.GridPlacementSystem
 {
     public class PlacedObject : MonoBehaviour
     {
-        GridPlacementObjectSO _gridObjectSO;
-        Vector2Int _origin;
-        GridPlacementObjectSO.Dir _dir;
+        public GridPlacementObjectSO _gridObjectSO;
+        public Vector2Int _origin;
+        public GridPlacementObjectSO.Dir _dir;
 
         public static PlacedObject Create(
             Vector3 worldPosition,
@@ -23,6 +23,10 @@ namespace Nevelson.GridPlacementSystem
             PlacedObject placedObject = placedObjectTransform.GetComponent<PlacedObject>();
             placedObject.Setup(gridObjectSO, origin, dir);
             return placedObject;
+        }
+        public PlacedObjectData GetData()
+        {
+            return new PlacedObjectData(_gridObjectSO, _origin, _dir);
         }
 
         void Setup(GridPlacementObjectSO placedObjectTypeSO, Vector2Int origin, GridPlacementObjectSO.Dir dir)

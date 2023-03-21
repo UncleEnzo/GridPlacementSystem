@@ -4,6 +4,7 @@ namespace Nevelson.GridPlacementSystem
 {
     public class Test_Grid : MonoBehaviour
     {
+        [SerializeField] GridBuildingSystem gbs;
         Grid<HeatMapGridObject> _heatGrid;
         Grid<StringGridObject> _stringGrid;
 
@@ -24,6 +25,17 @@ namespace Nevelson.GridPlacementSystem
 
         void Update()
         {
+            if (Input.GetKeyDown(KeyCode.A))
+            {
+                Debug.Log("Hiding Grid");
+                gbs.DisplayGrid(false);
+            }
+            if (Input.GetKeyDown(KeyCode.C))
+            {
+                Debug.Log("Showing Grid");
+                gbs.DisplayGrid(true);
+            }
+
             //Vector3 pos = GetMouseWorldPosition();
             //if (Input.GetMouseButtonDown(0))
             //{
