@@ -187,7 +187,8 @@ namespace Nevelson.GridPlacementSystem
                         GridObject gridObj = _grid.GetGridObject(gridPosition.x, gridPosition.y);
                         if (gridObj == null || !gridObj.CanBuild())
                         {
-                            Debug.LogError($"Couldn't pre-init {buildObject.prefab.name} at tile position: {tilePos} because {gridObj.PlacedObject.gameObject.name} is already occupying that space");
+                            Debug.LogError($"Couldn't pre-init {buildObject.prefab.name} at tile position: {tilePos} because something is already occupying that space");
+                            //{gridObj.PlacedObject.gameObject.name}
                             return false;
                         }
                     }
