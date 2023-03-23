@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace Nevelson.GridPlacementSystem
 {
     public class GridObject
@@ -6,13 +8,20 @@ namespace Nevelson.GridPlacementSystem
         int x;
         int y;
         PlacedObject placedObject;
+        SpriteRenderer worldTile;
+        Color originalColor;
 
-        public GridObject(Grid<GridObject> grid, int x, int y)
+        //note: Display and hide functions are responsible for activating and deactivating the tiles
+        //this class just sets it's color to it's original color or transparent
+
+        public GridObject(Grid<GridObject> grid, int x, int y, GameObject worldTile)
         {
             this.grid = grid;
             this.x = x;
             this.y = y;
+            this.worldTile = worldTile.GetComponentInChildren<SpriteRenderer>();
             placedObject = null;
+            originalColor = this.worldTile.color;
         }
 
         public override string ToString()
@@ -25,13 +34,15 @@ namespace Nevelson.GridPlacementSystem
         public void SetPlacedObject(PlacedObject placedObject)
         {
             this.placedObject = placedObject;
-            grid.TriggerGridObejctChanged(x, y);
+            grid.TriggerGridObjectChanged(x, y);
+            worldTile.color = Color.clear;
         }
 
         public void ClearPlacedObject()
         {
             placedObject = null;
-            grid.TriggerGridObejctChanged(x, y);
+            grid.TriggerGridObjectChanged(x, y);
+            worldTile.color = originalColor;
         }
 
         public bool CanBuild()
@@ -39,6 +50,4 @@ namespace Nevelson.GridPlacementSystem
             return placedObject == null;
         }
     }
-
 }
-

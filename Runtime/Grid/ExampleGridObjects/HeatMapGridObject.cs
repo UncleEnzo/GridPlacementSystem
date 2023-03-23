@@ -21,7 +21,7 @@ namespace Nevelson.GridPlacementSystem
         {
             value += addValue;
             Mathf.Clamp(value, MIN, MAX);
-            _grid.TriggerGridObejctChanged(_x, _y);
+            _grid.TriggerGridObjectChanged(_x, _y);
         }
 
         public float GetValueNormalized()

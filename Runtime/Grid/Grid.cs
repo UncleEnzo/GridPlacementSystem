@@ -87,7 +87,7 @@ namespace Nevelson.GridPlacementSystem
             if (OnGridValueChanged != null) OnGridValueChanged(this, new OnGridValueChangedEventArgs { x = x, y = y });
         }
 
-        public void TriggerGridObejctChanged(int x, int y)
+        public void TriggerGridObjectChanged(int x, int y)
         {
             if (OnGridValueChanged != null) OnGridValueChanged(this, new OnGridValueChangedEventArgs { x = x, y = y });
         }

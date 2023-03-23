@@ -5,7 +5,8 @@ namespace Nevelson.GridPlacementSystem
 {
     public class Test_Grid : MonoBehaviour
     {
-        [SerializeField] GridBuildingSystem gbs;
+        [SerializeField] PreInstantiatedObject[] preInitObjs;
+        [SerializeField] GameObject gbsPrefab;
         Grid<HeatMapGridObject> _heatGrid;
         Grid<StringGridObject> _stringGrid;
 
@@ -14,9 +15,24 @@ namespace Nevelson.GridPlacementSystem
         [SerializeField] UnityEvent _buildButtonDown;
         [SerializeField] UnityEvent _rotateButtonUp;
 
+        GridBuildingSystem gbs;
+        GridBuildingSystem GBS
+        {
+            get
+            {
+                if (gbs == null)
+                {
+                    gbs = Instantiate(gbsPrefab, Vector3.zero, Quaternion.identity).GetComponent<GridBuildingSystem>();
+                }
+                return gbs;
+            }
+        }
+
 
         void Start()
         {
+            GBS.AddPreInitObjects(preInitObjs);
+
             //testing heat map
             //_heatGrid = new Grid<HeatMapGridObject>(10, 1, 2f, new Vector3(0, 3, 0),
             //    (Grid<HeatMapGridObject> g, int x, int y) => new HeatMapGridObject(g, x, y), true);
@@ -31,58 +47,58 @@ namespace Nevelson.GridPlacementSystem
         {
             if (Input.GetKeyDown(KeyCode.D))
             {
-                gbs.PerformBuildAction(GridBuildingSystem.BuildAction.DISPLAY_GRID);
+                GBS.PerformBuildAction(GridBuildingSystem.BuildAction.DISPLAY_GRID);
             }
 
             if (Input.GetKeyDown(KeyCode.H))
             {
-                gbs.PerformBuildAction(GridBuildingSystem.BuildAction.HIDE_GRID);
+                GBS.PerformBuildAction(GridBuildingSystem.BuildAction.HIDE_GRID);
             }
 
             if (Input.GetKeyDown(KeyCode.B))
             {
-                gbs.PerformBuildAction(GridBuildingSystem.BuildAction.SET_BUILD_MODE);
+                GBS.PerformBuildAction(GridBuildingSystem.BuildAction.SET_BUILD_MODE);
             }
 
             //D is for display so I just changed it
             if (Input.GetKeyDown(KeyCode.G))
             {
-                gbs.PerformBuildAction(GridBuildingSystem.BuildAction.SET_DEMOLISH_MODE);
+                GBS.PerformBuildAction(GridBuildingSystem.BuildAction.SET_DEMOLISH_MODE);
             }
 
             if (Input.GetKeyDown(KeyCode.M))
             {
-                gbs.PerformBuildAction(GridBuildingSystem.BuildAction.SET_MOVE_MODE);
+                GBS.PerformBuildAction(GridBuildingSystem.BuildAction.SET_MOVE_MODE);
             }
 
             if (Input.GetMouseButtonDown(0))
             {
-                gbs.PerformBuildAction(GridBuildingSystem.BuildAction.ACCEPT_BUTTON);
+                GBS.PerformBuildAction(GridBuildingSystem.BuildAction.ACCEPT_BUTTON);
             }
 
             if (Input.GetMouseButtonDown(1))
             {
-                gbs.PerformBuildAction(GridBuildingSystem.BuildAction.UNDO_BUTTON);
+                GBS.PerformBuildAction(GridBuildingSystem.BuildAction.UNDO_BUTTON);
             }
 
             if (Input.GetKeyDown(KeyCode.R))
             {
-                gbs.PerformBuildAction(GridBuildingSystem.BuildAction.ROTATE);
+                GBS.PerformBuildAction(GridBuildingSystem.BuildAction.ROTATE);
             }
 
             if (Input.GetKeyDown(KeyCode.Alpha0))
             {
-                gbs.ChangeGridObjectToPlace(-1);
+                GBS.ChangeGridObjectToPlace(-1);
             }
 
             if (Input.GetKeyDown(KeyCode.Alpha1))
             {
-                gbs.ChangeGridObjectToPlace(0);
+                GBS.ChangeGridObjectToPlace(0);
             }
 
             if (Input.GetKeyDown(KeyCode.Alpha2))
             {
-                gbs.ChangeGridObjectToPlace(1);
+                GBS.ChangeGridObjectToPlace(1);
             }
 
             //Vector3 pos = GetMouseWorldPosition();

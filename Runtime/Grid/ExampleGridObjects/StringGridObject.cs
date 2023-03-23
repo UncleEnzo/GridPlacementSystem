@@ -20,13 +20,13 @@ namespace Nevelson.GridPlacementSystem
         public void AddLetter(string letter)
         {
             letters += letter;
-            grid.TriggerGridObejctChanged(x, y);
+            grid.TriggerGridObjectChanged(x, y);
         }
 
         public void AddNumber(string number)
         {
             numbers += number;
-            grid.TriggerGridObejctChanged(x, y);
+            grid.TriggerGridObjectChanged(x, y);
         }
 
         public override string ToString()

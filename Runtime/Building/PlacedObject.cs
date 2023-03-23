@@ -5,9 +5,14 @@ namespace Nevelson.GridPlacementSystem
 {
     public class PlacedObject : MonoBehaviour
     {
-        public GridPlacementObjectSO _gridObjectSO;
-        public Vector2Int _origin;
-        public GridPlacementObjectSO.Dir _dir;
+        [SerializeField] bool _isMovable = true;
+        [SerializeField] bool _isDestructable = true;
+        GridPlacementObjectSO _gridObjectSO;
+        Vector2Int _origin;
+        GridPlacementObjectSO.Dir _dir;
+
+        public bool IsMovable { get => _isMovable; }
+        public bool IsDestructable { get => _isDestructable; }
 
         public static PlacedObject Create(
             Vector3 worldPosition,
@@ -26,7 +31,7 @@ namespace Nevelson.GridPlacementSystem
         }
         public PlacedObjectData GetData()
         {
-            return new PlacedObjectData(_gridObjectSO, _origin, _dir);
+            return new PlacedObjectData(_gridObjectSO, _origin, _dir, _isMovable, _isDestructable);
         }
 
         void Setup(GridPlacementObjectSO placedObjectTypeSO, Vector2Int origin, GridPlacementObjectSO.Dir dir)
