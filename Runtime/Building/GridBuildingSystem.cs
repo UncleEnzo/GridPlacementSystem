@@ -5,32 +5,6 @@ using UnityEngine.Events;
 
 namespace Nevelson.GridPlacementSystem
 {
-    [Serializable]
-    public class PreInitObject
-    {
-        public Vector2Int TilePosition;
-        public GridPlacementObjectSO GridObject;
-    }
-
-    public class PlacedGridObject
-    {
-        public string PlacedObjectID;
-        public Vector2Int TilePosition;
-        public GridPlacementObjectSO GridObjectSO;
-
-        public PlacedGridObject(string PlacedObjectID, GridPlacementObjectSO GridObjectSO, Vector2Int TilePosition)
-        {
-            this.PlacedObjectID = PlacedObjectID;
-            this.GridObjectSO = GridObjectSO;
-            this.TilePosition = TilePosition;
-        }
-
-        public override string ToString()
-        {
-            return $"PlacedObjectID {PlacedObjectID} | Tile pos: {TilePosition} | GridObjectSO {GridObjectSO.prefab.name}";
-        }
-    }
-
     public class GridBuildingSystem : MonoBehaviour
     {
         enum BuildMode { BUILD, MOVE, DEMOLISH }
