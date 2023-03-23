@@ -84,6 +84,12 @@ namespace Nevelson.GridPlacementSystem
             PerformBuildAction(BuildAction.SELECT_GRID_OBJECT, gridObjectIndex);
         }
 
+        public void SetAllPreInitObjects(List<PreInitObject> preInitObjects)
+        {
+            _preInitGridObjects.Clear();
+            _preInitGridObjects = preInitObjects;
+        }
+
         public void AddPreInitObjects(PreInitObject[] preInitObject)
         {
             foreach (var preInit in preInitObject)
