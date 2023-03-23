@@ -5,7 +5,7 @@ namespace Nevelson.GridPlacementSystem
 {
     public class Test_Grid : MonoBehaviour
     {
-        [SerializeField] PreInstantiatedObject[] preInitObjs;
+        [SerializeField] PreInitObject[] preInitObjs;
         [SerializeField] GameObject gbsPrefab;
         Grid<HeatMapGridObject> _heatGrid;
         Grid<StringGridObject> _stringGrid;

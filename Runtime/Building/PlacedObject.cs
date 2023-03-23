@@ -31,7 +31,13 @@ namespace Nevelson.GridPlacementSystem
         }
         public PlacedObjectData GetData()
         {
-            return new PlacedObjectData(_gridObjectSO, _origin, _dir, _isMovable, _isDestructable);
+            return new PlacedObjectData(
+                _gridObjectSO,
+                _origin,
+                _dir,
+                _isMovable,
+                _isDestructable,
+                GetInstanceID().ToString());
         }
 
         void Setup(GridPlacementObjectSO placedObjectTypeSO, Vector2Int origin, GridPlacementObjectSO.Dir dir)

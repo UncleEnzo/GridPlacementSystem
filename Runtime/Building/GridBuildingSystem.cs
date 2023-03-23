@@ -1,14 +1,34 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Nevelson.GridPlacementSystem
 {
     [Serializable]
-    public class PreInstantiatedObject
+    public class PreInitObject
     {
         public Vector2Int TilePosition;
         public GridPlacementObjectSO GridObject;
+    }
+
+    public class PlacedGridObject
+    {
+        public string PlacedObjectID;
+        public Vector2Int TilePosition;
+        public GridPlacementObjectSO GridObjectSO;
+
+        public PlacedGridObject(string PlacedObjectID, GridPlacementObjectSO GridObjectSO, Vector2Int TilePosition)
+        {
+            this.PlacedObjectID = PlacedObjectID;
+            this.GridObjectSO = GridObjectSO;
+            this.TilePosition = TilePosition;
+        }
+
+        public override string ToString()
+        {
+            return $"PlacedObjectID {PlacedObjectID} | Tile pos: {TilePosition} | GridObjectSO {GridObjectSO.prefab.name}";
+        }
     }
 
     public class GridBuildingSystem : MonoBehaviour
@@ -16,7 +36,7 @@ namespace Nevelson.GridPlacementSystem
         enum BuildMode { BUILD, MOVE, DEMOLISH }
 
         [Header("Place grid objects here you want instantiated before game starts")]
-        [SerializeField] List<PreInstantiatedObject> _preInitGridObjects;
+        [SerializeField] List<PreInitObject> _preInitGridObjects;
 
         [Header("Place objects here you want player to be able to instantiate on build")]
         [SerializeField] List<GridPlacementObjectSO> _gridObjects;
@@ -33,11 +53,14 @@ namespace Nevelson.GridPlacementSystem
         [SerializeField] GameObject _buildingGhostPrefab;
         [SerializeField] AudioClip _buildSound;
         [SerializeField] AudioClip _demolishSound;
+        [SerializeField] UnityEvent<List<PlacedGridObject>> _OnGridUpdate;
 
+        List<PlacedGridObject> _placedGridObjects = new List<PlacedGridObject>();
+
+        Grid<GridObject> _grid;
         GameObject _buildingGhost;
         GameObject _buildingSoundGO;
         GridPlacementObjectSO _selectedGridObjectSO;
-        Grid<GridObject> _grid;
         GridPlacementObjectSO.Dir _dir = GridPlacementObjectSO.Dir.Down;
         PlacedObjectData _lastDemolish = null;
         bool _isGridDisplayed = false;
@@ -72,11 +95,6 @@ namespace Nevelson.GridPlacementSystem
             SELECT_GRID_OBJECT,
         }
 
-        public void ChangeGridObjectToPlace(int gridObjectIndex)
-        {
-            PerformBuildAction(BuildAction.SELECT_GRID_OBJECT, gridObjectIndex);
-        }
-
         public void PerformBuildAction(BuildAction buildAction)
         {
             if (buildAction == BuildAction.SELECT_GRID_OBJECT)
@@ -87,7 +105,12 @@ namespace Nevelson.GridPlacementSystem
             PerformBuildAction(buildAction, -2);
         }
 
-        public void AddPreInitObjects(PreInstantiatedObject[] preInitObject)
+        public void ChangeGridObjectToPlace(int gridObjectIndex)
+        {
+            PerformBuildAction(BuildAction.SELECT_GRID_OBJECT, gridObjectIndex);
+        }
+
+        public void AddPreInitObjects(PreInitObject[] preInitObject)
         {
             foreach (var preInit in preInitObject)
             {
@@ -151,13 +174,14 @@ namespace Nevelson.GridPlacementSystem
                 _gridStartingPosition,
                 (Grid<GridObject> g, int x, int y) =>
                 {
+                    //this sets the world tile and also passes its reference to the grid object
+                    //so it can control its color
                     GameObject tile = Instantiate(_worldGridSprite, transform);
                     tile.transform.localPosition = new Vector3(x, y) * _cellSize + _gridStartingPosition;
                     return new GridObject(g, x, y, tile);
                 },
                 _isDebug);
             CreateBuildingGhost();
-            //GenerateWorldTiles();
             PreInstantiateGridObjects(_preInitGridObjects);
             DisplayGrid(_displayGridOnStart);
         }
@@ -167,29 +191,30 @@ namespace Nevelson.GridPlacementSystem
             DisplayGrid(false);
         }
 
-        void PreInstantiateGridObjects(List<PreInstantiatedObject> preInitObject)
+        void PreInstantiateGridObjects(List<PreInitObject> preInitObject)
         {
-            bool CheckSurroundingSpaceAtPos(Vector2Int tilePos, GridPlacementObjectSO buildObject)
+            bool PreInitBuild(Vector2Int tilePos, GridPlacementObjectSO buildObject, out PlacedGridObject preInitedPlacedObject)
             {
-                _grid.GetXY((Vector2)tilePos, out int x, out int y);
-                Vector2Int placedObjectOrigin = new Vector2Int(x, y);
-                List<Vector2Int> gridPositionList = _selectedGridObjectSO.GetGridPositionList(placedObjectOrigin, _dir);
-                foreach (Vector2Int gridPosition in gridPositionList)
+                preInitedPlacedObject = null;
+                bool CheckSurroundingSpaceAtPos(Vector2Int tilePos, GridPlacementObjectSO buildObject)
                 {
-                    //if the surrounding tile is outside grid bounds or can't build
-                    GridObject gridObj = _grid.GetGridObject(gridPosition.x, gridPosition.y);
-                    if (gridObj == null || !gridObj.CanBuild())
+                    _grid.GetXY((Vector2)tilePos, out int x, out int y);
+                    Vector2Int placedObjectOrigin = new Vector2Int(x, y);
+                    List<Vector2Int> gridPositionList = _selectedGridObjectSO.GetGridPositionList(placedObjectOrigin, _dir);
+                    foreach (Vector2Int gridPosition in gridPositionList)
                     {
-                        Debug.LogError($"Couldn't pre-init {buildObject.prefab.name} at tile position: {tilePos} because {gridObj.PlacedObject.gameObject.name} is already occupying that space");
-                        return false;
+                        //if the surrounding tile is outside grid bounds or can't build
+                        GridObject gridObj = _grid.GetGridObject(gridPosition.x, gridPosition.y);
+                        if (gridObj == null || !gridObj.CanBuild())
+                        {
+                            Debug.LogError($"Couldn't pre-init {buildObject.prefab.name} at tile position: {tilePos} because {gridObj.PlacedObject.gameObject.name} is already occupying that space");
+                            return false;
+                        }
                     }
+                    return true;
                 }
-                return true;
-            }
 
-            void PreInitBuild(Vector2Int tilePos, GridPlacementObjectSO buildObject)
-            {
-                if (!CheckSurroundingSpaceAtPos(tilePos, buildObject)) return;
+                if (!CheckSurroundingSpaceAtPos(tilePos, buildObject)) return false;
                 _grid.GetXY((Vector2)tilePos, out int x, out int y);
                 Vector2Int placedObjectOrigin = new Vector2Int(x, y);
 
@@ -213,26 +238,24 @@ namespace Nevelson.GridPlacementSystem
                     _grid.GetGridObject(gridPosition.x, gridPosition.y).SetPlacedObject(placedObject);
                 }
 
+                preInitedPlacedObject = new PlacedGridObject(
+                    placedObject.GetInstanceID().ToString(),
+                    buildObject,
+                    placedObjectOrigin);
+
                 OnObjectPlaced?.Invoke(this, EventArgs.Empty);
-                return;
+                return true;
             }
 
             foreach (var obj in preInitObject)
             {
-                PreInitBuild(obj.TilePosition, obj.GridObject);
+                if (PreInitBuild(obj.TilePosition, obj.GridObject, out PlacedGridObject preInitedPlacedObject))
+                {
+                    _placedGridObjects.Add(preInitedPlacedObject);
+                }
             }
+            _OnGridUpdate?.Invoke(_placedGridObjects);
         }
-
-        //void GenerateWorldTiles()
-        //{
-        //    for (int x = 0; x < _gridWidth; x++)
-        //    {
-        //        for (int y = 0; y < _gridHeight; y++)
-        //        {
-
-        //        }
-        //    }
-        //}
 
         void PerformBuildAction(BuildAction buildAction, int gridObjectIndex)
         {
@@ -243,7 +266,6 @@ namespace Nevelson.GridPlacementSystem
                 Debug.LogError($"{gridObjectIndex} is not out of bounds of the _gridObjects list");
                 return;
             }
-
             if (buildAction == BuildAction.DISPLAY_GRID)
             {
                 Debug.Log("Displaying grid");
@@ -256,33 +278,28 @@ namespace Nevelson.GridPlacementSystem
                 DisplayGrid(false);
                 return;
             }
-
             if (!_isGridDisplayed)
             {
                 Debug.LogWarning($"Not performing action {buildAction} because grid is not displayed");
                 return;
             }
-
             if (_selectedGridObjectSO == null)
             {
                 Debug.Log("Resetting rotation");
                 ResetRotation();
             }
-
             if (buildAction == BuildAction.SET_BUILD_MODE)
             {
                 Debug.Log("Setting mode to Build Mode");
                 SetBuildMode(BuildMode.BUILD);
                 return;
             }
-
             if (buildAction == BuildAction.SET_DEMOLISH_MODE)
             {
                 Debug.Log("Setting mode to Demolish Mode");
                 SetBuildMode(BuildMode.DEMOLISH);
                 return;
             }
-
             if (buildAction == BuildAction.SET_MOVE_MODE)
             {
                 Debug.Log("Setting mode to Move Mode");
@@ -296,7 +313,10 @@ namespace Nevelson.GridPlacementSystem
                     if (buildAction == BuildAction.ACCEPT_BUTTON)
                     {
                         Debug.Log($"Build Mode is: {buildMode}, performing build action");
-                        Build();
+                        if (Build())
+                        {
+                            _OnGridUpdate?.Invoke(_placedGridObjects);
+                        }
                         break;
                     }
                     if (buildAction == BuildAction.ROTATE)
@@ -329,7 +349,10 @@ namespace Nevelson.GridPlacementSystem
                     if (_movingObject && buildAction == BuildAction.ACCEPT_BUTTON)
                     {
                         Debug.Log($"Build Mode is: {buildMode}, moving selected object");
-                        Move();
+                        if (Move())
+                        {
+                            _OnGridUpdate?.Invoke(_placedGridObjects);
+                        }
                         break;
                     }
                     if (_movingObject && buildAction == BuildAction.UNDO_BUTTON)
@@ -350,7 +373,10 @@ namespace Nevelson.GridPlacementSystem
                     if (buildAction == BuildAction.ACCEPT_BUTTON)
                     {
                         Debug.Log($"Build Mode is: {buildMode}, performing Demolish");
-                        Demolish(false);
+                        if (Demolish(false))
+                        {
+                            _OnGridUpdate?.Invoke(_placedGridObjects);
+                        }
                         break;
                     }
                     break;
@@ -474,18 +500,18 @@ namespace Nevelson.GridPlacementSystem
             _movingObject = false;
         }
 
-        void Move()
+        bool Move()
         {
-            if (!Build()) return;
+            if (!Build()) return false;
             _movingObject = false;
             _lastDemolish = null;
             DeselectBuildObject();
+            return true;
         }
 
         bool Build()
         {
             if (_selectedGridObjectSO == null) return false;
-
             if (!CheckSurroundingSpace())
             {
                 Debug.Log("Can't build, space already taken");
@@ -494,7 +520,6 @@ namespace Nevelson.GridPlacementSystem
 
             _grid.GetXY(GetMouseWorldPosition(), out int x, out int y);
             Vector2Int placedObjectOrigin = new Vector2Int(x, y);
-
             Vector2Int rotationOffset = _selectedGridObjectSO.GetRotationOffset(_dir);
             Vector3 placedObjectWorldPosition = _grid.GetWorldPosition(x, y) +
                 new Vector3(rotationOffset.x, rotationOffset.y) * _grid.CellSize;
@@ -519,19 +544,23 @@ namespace Nevelson.GridPlacementSystem
             BuildingSound.transform.position = GetMouseWorldPosition();
             BuildingSound.PlayOneShot(_buildSound);
 
+            _placedGridObjects.Add(new PlacedGridObject(
+                placedObject.GetInstanceID().ToString(),
+                _selectedGridObjectSO,
+                placedObjectOrigin));
             OnObjectPlaced?.Invoke(this, EventArgs.Empty);
             return true;
         }
 
-        void Demolish(bool isMoveDemolish)
+        bool Demolish(bool isMoveDemolish)
         {
             GridObject gridObject = _grid.GetGridObject(GetMouseWorldPosition());
             PlacedObject placedObject = gridObject.PlacedObject;
-            if (placedObject == null) return;
+            if (placedObject == null) return false;
             if (!isMoveDemolish && !placedObject.IsDestructable)
             {
                 Debug.Log("Object is not marked as destructible, not destroying");
-                return;
+                return false;
             }
 
             _lastDemolish = gridObject.PlacedObject.GetData();
@@ -548,6 +577,11 @@ namespace Nevelson.GridPlacementSystem
                 BuildingSound.transform.position = GetMouseWorldPosition();
                 BuildingSound.PlayOneShot(_demolishSound);
             }
+
+            //remove it from the placed objects list
+            int idx = _placedGridObjects.FindIndex(x => x.PlacedObjectID.Equals(_lastDemolish.PlacedObjectID));
+            _placedGridObjects.RemoveAt(idx);
+            return true;
         }
 
         void UndoLastDemolish()
@@ -584,6 +618,12 @@ namespace Nevelson.GridPlacementSystem
                 _grid.GetGridObject(gridPosition.x, gridPosition.y).SetPlacedObject(placedObject);
             }
 
+            //update the placed list, don't need to send this info
+            _placedGridObjects.Add(new PlacedGridObject(
+                placedObject.GetInstanceID().ToString(),
+                selectedGridObjectSO,
+                placedObjectOrigin
+                ));
             OnObjectPlaced?.Invoke(this, EventArgs.Empty);
             _lastDemolish = null;
         }

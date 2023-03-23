@@ -9,7 +9,9 @@ namespace Nevelson.GridPlacementSystem
         int y;
         PlacedObject placedObject;
         SpriteRenderer worldTile;
-        Color originalColor;
+        Color vacantColor;
+        Color filledColor;
+
 
         //note: Display and hide functions are responsible for activating and deactivating the tiles
         //this class just sets it's color to it's original color or transparent
@@ -21,7 +23,9 @@ namespace Nevelson.GridPlacementSystem
             this.y = y;
             this.worldTile = worldTile.GetComponentInChildren<SpriteRenderer>();
             placedObject = null;
-            originalColor = this.worldTile.color;
+            vacantColor = this.worldTile.color;
+            filledColor = Color.blue;
+            filledColor.a = vacantColor.a;
         }
 
         public override string ToString()
@@ -35,14 +39,14 @@ namespace Nevelson.GridPlacementSystem
         {
             this.placedObject = placedObject;
             grid.TriggerGridObjectChanged(x, y);
-            worldTile.color = Color.clear;
+            worldTile.color = filledColor;
         }
 
         public void ClearPlacedObject()
         {
             placedObject = null;
             grid.TriggerGridObjectChanged(x, y);
-            worldTile.color = originalColor;
+            worldTile.color = vacantColor;
         }
 
         public bool CanBuild()

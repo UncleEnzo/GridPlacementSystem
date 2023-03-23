@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8059928191699870115}
   - component: {fileID: 8059928191699870114}
+  - component: {fileID: 7087304623253990752}
   m_Layer: 0
   m_Name: GridBuildingSystem
   m_TagString: Untagged
@@ -58,3 +59,30 @@ MonoBehaviour:
   _buildingGhostPrefab: {fileID: 155848982808662930, guid: 98250ed60f2ab4648ae5cb6ba6ac21e5, type: 3}
   _buildSound: {fileID: 8300000, guid: 915a17391fa0fa34ea191b9f8b808d4e, type: 3}
   _demolishSound: {fileID: 8300000, guid: 915a17391fa0fa34ea191b9f8b808d4e, type: 3}
+  _OnGridUpdate:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 7087304623253990752}
+        m_TargetAssemblyTypeName: Test_GPSCallback, com.nevelson.gridplacementsystem
+        m_MethodName: On_GridUpdate
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+--- !u!114 &7087304623253990752
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8059928191699870117}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 681c6e283e9d62c4d8d8f800eec4035c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
