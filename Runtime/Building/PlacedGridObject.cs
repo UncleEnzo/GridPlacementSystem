@@ -5,10 +5,10 @@ namespace Nevelson.GridPlacementSystem
     public class PlacedGridObject
     {
         public string PlacedObjectID;
-        public Vector2Int TilePosition;
+        public Vector2 TilePosition;
         public GridPlacementObjectSO GridObjectSO;
 
-        public PlacedGridObject(string PlacedObjectID, GridPlacementObjectSO GridObjectSO, Vector2Int TilePosition)
+        public PlacedGridObject(string PlacedObjectID, GridPlacementObjectSO GridObjectSO, Vector2 TilePosition)
         {
             this.PlacedObjectID = PlacedObjectID;
             this.GridObjectSO = GridObjectSO;
