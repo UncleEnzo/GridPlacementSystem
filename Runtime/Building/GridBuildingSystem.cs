@@ -552,7 +552,7 @@ namespace Nevelson.GridPlacementSystem
             _placedGridObjects.Add(new PlacedGridObject(
                 placedObject.GetInstanceID().ToString(),
                 _selectedGridObjectSO,
-                placedObjectWorldPosition,
+                placedObjectOrigin,
                 _dir));
             OnObjectPlaced?.Invoke(this, EventArgs.Empty);
             return true;
@@ -628,7 +628,7 @@ namespace Nevelson.GridPlacementSystem
             _placedGridObjects.Add(new PlacedGridObject(
                 placedObject.GetInstanceID().ToString(),
                 selectedGridObjectSO,
-                placedObjectWorldPosition,
+                placedObjectOrigin,
                 _dir));
             OnObjectPlaced?.Invoke(this, EventArgs.Empty);
             _lastDemolish = null;
