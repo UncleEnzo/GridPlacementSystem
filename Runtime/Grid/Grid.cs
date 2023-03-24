@@ -16,6 +16,7 @@ namespace Nevelson.GridPlacementSystem
         float _cellSize;
         int _width;
         int _height;
+        Transform _transform;
 
         TGridObject[,] _gridArray;
         TextMeshPro[,] debugTextArray;
@@ -24,13 +25,13 @@ namespace Nevelson.GridPlacementSystem
         public int Height { get { return _height; } }
         public float CellSize { get { return _cellSize; } }
 
-        public Grid(int width, int height, float cellSize, Func<Grid<TGridObject>, int, int, TGridObject> createGridObject, bool debug = false)
+        public Grid(int width, int height, float cellSize, Func<Grid<TGridObject>, int, int, TGridObject> createGridObject, Transform transform, bool debug = false)
         {
             _width = width;
             _height = height;
             _cellSize = cellSize;
             _gridArray = new TGridObject[width, height];
-
+            _transform = transform;
             for (int x = 0; x < _gridArray.GetLength(0); x++)
             {
                 for (int y = 0; y < _gridArray.GetLength(1); y++)
@@ -49,18 +50,29 @@ namespace Nevelson.GridPlacementSystem
                     {
                         var pos = new Vector3(x, y) * _cellSize;
                         debugTextArray[x, y] = StaticFactory.CreateWorldText(
-                         null,
-
-                        $"{pos.x},{pos.y}",
+                         transform,
+                        $"{x},{y}",
                          GetWorldPosition(x, y) + (new Vector3(cellSize, cellSize, 0) * .5f), //centers the textmesh
                          4,
                          Color.white);
-                        Debug.DrawLine(GetWorldPosition(x, y), GetWorldPosition(x, y + 1), Color.white, 1000f);
-                        Debug.DrawLine(GetWorldPosition(x, y), GetWorldPosition(x + 1, y), Color.white, 1000f);
+                        Debug.DrawLine(
+                            GetWorldPosition(x, y),
+                            GetWorldPosition(x, y + 1),
+                            Color.white, 1000f);
+                        Debug.DrawLine(
+                            GetWorldPosition(x, y),
+                            GetWorldPosition(x + 1, y),
+                            Color.white, 1000f);
                     }
                 }
-                Debug.DrawLine(GetWorldPosition(0, height), GetWorldPosition(width, height), Color.white, 1000f);
-                Debug.DrawLine(GetWorldPosition(width, 0), GetWorldPosition(width, height), Color.white, 1000f);
+                Debug.DrawLine(
+                    GetWorldPosition(0, height),
+                    GetWorldPosition(width, height),
+                    Color.white, 1000f);
+                Debug.DrawLine(
+                    GetWorldPosition(width, 0),
+                    GetWorldPosition(width, height),
+                    Color.white, 1000f);
 
                 OnGridValueChanged += (object sender, OnGridValueChangedEventArgs eventArgs) =>
                 {
@@ -108,13 +120,13 @@ namespace Nevelson.GridPlacementSystem
 
         public void GetXY(Vector3 worldPosition, out int x, out int y)
         {
-            x = Mathf.FloorToInt((worldPosition).x / _cellSize);
-            y = Mathf.FloorToInt((worldPosition).y / _cellSize);
+            x = Mathf.FloorToInt((worldPosition - _transform.position).x / _cellSize);
+            y = Mathf.FloorToInt((worldPosition - _transform.position).y / _cellSize);
         }
 
         public Vector3 GetWorldPosition(int x, int y)
         {
-            return new Vector3(x, y) * _cellSize;
+            return new Vector3(x, y) * _cellSize + _transform.position;
         }
     }
 }

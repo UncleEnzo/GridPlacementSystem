@@ -22,7 +22,7 @@ namespace Nevelson.GridPlacementSystem
             {
                 if (gbs == null)
                 {
-                    gbs = Instantiate(gbsPrefab, Vector3.zero, Quaternion.identity).GetComponent<GridBuildingSystem>();
+                    gbs = Instantiate(gbsPrefab, new Vector3(-15, -10, 0), Quaternion.identity).GetComponent<GridBuildingSystem>();
                 }
                 return gbs;
             }

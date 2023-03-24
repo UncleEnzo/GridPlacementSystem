@@ -9,7 +9,7 @@ namespace Nevelson.GridPlacementSystem
             GameObject gameObject = new GameObject("World_Text", typeof(TextMeshPro));
             Transform transform = gameObject.transform;
             transform.SetParent(parent, false);
-            transform.localPosition = localPosition;
+            transform.position = localPosition;
             TextMeshPro textMesh = gameObject.GetComponent<TextMeshPro>();
             textMesh.alignment = textAlignment;
             textMesh.text = text;

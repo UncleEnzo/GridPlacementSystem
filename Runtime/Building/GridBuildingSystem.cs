@@ -172,8 +172,10 @@ namespace Nevelson.GridPlacementSystem
                     //so it can control its color
                     GameObject tile = Instantiate(_worldGridSprite, transform);
                     tile.transform.localPosition = new Vector3(x, y) * _cellSize;
-                    return new GridObject(g, x, y, tile);
+                    Vector3Int gridTransform = Vector3Int.RoundToInt(tile.transform.localPosition);
+                    return new GridObject(g, gridTransform.x, gridTransform.y, tile);
                 },
+                transform,
                 _isDebug);
             CreateBuildingGhost();
             PreInstantiateGridObjects(_preInitGridObjects);
@@ -190,6 +192,7 @@ namespace Nevelson.GridPlacementSystem
             bool PreInitBuild(Vector2Int tilePos, GridPlacementObjectSO buildObject, GridPlacementObjectSO.Dir dir, out PlacedGridObject preInitedPlacedObject)
             {
                 preInitedPlacedObject = null;
+                tilePos += Vector2Int.FloorToInt(transform.position);
                 bool CheckSurroundingSpaceAtPos(Vector2Int tilePos, GridPlacementObjectSO buildObject)
                 {
                     _grid.GetXY((Vector2)tilePos, out int x, out int y);

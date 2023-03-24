@@ -17,5 +17,5 @@ MonoBehaviour:
   ghost: {fileID: 7376595715133753744, guid: 1c02eada1d088534b86b7626623cfd13, type: 3}
   width: 5
   height: 4
-  canRotate: 0
-  maxPlaced: 1
+  canRotate: 1
+  maxPlaced: 0
