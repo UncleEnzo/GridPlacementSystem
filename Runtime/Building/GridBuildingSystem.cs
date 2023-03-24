@@ -192,10 +192,10 @@ namespace Nevelson.GridPlacementSystem
             bool PreInitBuild(Vector2Int tilePos, GridPlacementObjectSO buildObject, GridPlacementObjectSO.Dir dir, out PlacedGridObject preInitedPlacedObject)
             {
                 preInitedPlacedObject = null;
-                tilePos += Vector2Int.FloorToInt(transform.position);
-                bool CheckSurroundingSpaceAtPos(Vector2Int tilePos, GridPlacementObjectSO buildObject)
+                Vector2Int tilePosWithTransOffset = tilePos + Vector2Int.FloorToInt(transform.position);
+                bool CheckSurroundingSpaceAtPos(Vector2Int tilePosWithTransOffset, GridPlacementObjectSO buildObject)
                 {
-                    _grid.GetXY((Vector2)tilePos, out int x, out int y);
+                    _grid.GetXY((Vector2)tilePosWithTransOffset, out int x, out int y);
                     Vector2Int placedObjectOrigin = new Vector2Int(x, y);
                     List<Vector2Int> gridPositionList = _selectedGridObjectSO.GetGridPositionList(placedObjectOrigin, _dir);
                     foreach (Vector2Int gridPosition in gridPositionList)
@@ -204,15 +204,15 @@ namespace Nevelson.GridPlacementSystem
                         GridObject gridObj = _grid.GetGridObject(gridPosition.x, gridPosition.y);
                         if (gridObj == null || !gridObj.CanBuild())
                         {
-                            Debug.LogError($"Couldn't pre-init {buildObject.prefab.name} at tile position: {tilePos} because something is already occupying that space");
+                            Debug.LogError($"Couldn't pre-init {buildObject.prefab.name} at tile position: {tilePosWithTransOffset} because something is already occupying that space");
                             return false;
                         }
                     }
                     return true;
                 }
 
-                if (!CheckSurroundingSpaceAtPos(tilePos, buildObject)) return false;
-                _grid.GetXY((Vector2)tilePos, out int x, out int y);
+                if (!CheckSurroundingSpaceAtPos(tilePosWithTransOffset, buildObject)) return false;
+                _grid.GetXY((Vector2)tilePosWithTransOffset, out int x, out int y);
                 Vector2Int placedObjectOrigin = new Vector2Int(x, y);
 
                 Vector2Int rotationOffset = buildObject.GetRotationOffset(dir);
