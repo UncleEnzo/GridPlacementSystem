@@ -52,8 +52,8 @@ MonoBehaviour:
   _gridWidth: 40
   _gridHeight: 25
   _cellSize: 1
-  _gridStartingPosition: {x: 0, y: 0, z: 0}
-  _isDebug: 0
+  _gridStartingPosition: {x: -6, y: -20, z: 0}
+  _isDebug: 1
   _buildingSoundPrefab: {fileID: 4305903890773607726, guid: 2793789cc8952e045b734f22ad8e3770, type: 3}
   _worldGridSprite: {fileID: 4173932048244737505, guid: 16ff6129e77d86547b1090346a001795, type: 3}
   _buildingGhostPrefab: {fileID: 155848982808662930, guid: 98250ed60f2ab4648ae5cb6ba6ac21e5, type: 3}

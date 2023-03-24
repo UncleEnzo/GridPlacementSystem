@@ -49,11 +49,13 @@ namespace Nevelson.GridPlacementSystem
                 {
                     for (int y = 0; y < _gridArray.GetLength(1); y++)
                     {
+                        var pos = new Vector3(x, y) * _cellSize + _originPosition;
                         debugTextArray[x, y] = StaticFactory.CreateWorldText(
                          null,
-                         $"{x},{y}",
+
+                        $"{pos.x},{pos.y}",
                          GetWorldPosition(x, y) + (new Vector3(cellSize, cellSize, 0) * .5f), //centers the textmesh
-                         2,
+                         4,
                          Color.white);
                         Debug.DrawLine(GetWorldPosition(x, y), GetWorldPosition(x, y + 1), Color.white, 1000f);
                         Debug.DrawLine(GetWorldPosition(x, y), GetWorldPosition(x + 1, y), Color.white, 1000f);
