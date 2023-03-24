@@ -161,12 +161,6 @@ namespace Nevelson.GridPlacementSystem
 
         void Start()
         {
-            if (transform.position != Vector3.zero)
-            {
-                Debug.LogError("Transform must be zeroed out for tile sprites and grid to work. Use the starting position in grid to correctly place the grid");
-                return;
-            }
-
             _selectedGridObjectSO = _gridObjects[0];
             _grid = new Grid<GridObject>(
                 _gridWidth,

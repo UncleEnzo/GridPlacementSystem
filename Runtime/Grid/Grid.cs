@@ -18,7 +18,6 @@ namespace Nevelson.GridPlacementSystem
         int _height;
 
         TGridObject[,] _gridArray;
-        //Vector3 _originPosition;
         TextMeshPro[,] debugTextArray;
 
         public int Width { get { return _width; } }
@@ -31,7 +30,6 @@ namespace Nevelson.GridPlacementSystem
             _height = height;
             _cellSize = cellSize;
             _gridArray = new TGridObject[width, height];
-            //_originPosition = originPosition;
 
             for (int x = 0; x < _gridArray.GetLength(0); x++)
             {
