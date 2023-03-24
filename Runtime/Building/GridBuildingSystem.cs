@@ -195,7 +195,7 @@ namespace Nevelson.GridPlacementSystem
 
         void PreInstantiateGridObjects(List<PreInitObject> preInitObject)
         {
-            bool PreInitBuild(Vector2Int tilePos, GridPlacementObjectSO buildObject, out PlacedGridObject preInitedPlacedObject)
+            bool PreInitBuild(Vector2Int tilePos, GridPlacementObjectSO buildObject, GridPlacementObjectSO.Dir dir, out PlacedGridObject preInitedPlacedObject)
             {
                 preInitedPlacedObject = null;
                 bool CheckSurroundingSpaceAtPos(Vector2Int tilePos, GridPlacementObjectSO buildObject)
@@ -221,21 +221,21 @@ namespace Nevelson.GridPlacementSystem
                 _grid.GetXY((Vector2)tilePos, out int x, out int y);
                 Vector2Int placedObjectOrigin = new Vector2Int(x, y);
 
-                Vector2Int rotationOffset = buildObject.GetRotationOffset(_dir);
+                Vector2Int rotationOffset = buildObject.GetRotationOffset(dir);
                 Vector3 placedObjectWorldPosition = _grid.GetWorldPosition(x, y) +
                     new Vector3(rotationOffset.x, rotationOffset.y) * _grid.CellSize;
 
                 PlacedObject placedObject = PlacedObject.Create(
                     placedObjectWorldPosition,
                     placedObjectOrigin,
-                    _dir,
+                    dir,
                     buildObject);
 
                 //this rotates the sprite a bit more for 2D
-                placedObject.transform.rotation = Quaternion.Euler(0, 0, -buildObject.GetRotationAngle(_dir));
+                placedObject.transform.rotation = Quaternion.Euler(0, 0, -buildObject.GetRotationAngle(dir));
 
                 //populate other tiles that take up the dimensions of the object with info that they are taken
-                List<Vector2Int> gridPositionList = buildObject.GetGridPositionList(placedObjectOrigin, _dir);
+                List<Vector2Int> gridPositionList = buildObject.GetGridPositionList(placedObjectOrigin, dir);
                 foreach (Vector2Int gridPosition in gridPositionList)
                 {
                     _grid.GetGridObject(gridPosition.x, gridPosition.y).SetPlacedObject(placedObject);
@@ -244,7 +244,8 @@ namespace Nevelson.GridPlacementSystem
                 preInitedPlacedObject = new PlacedGridObject(
                     placedObject.GetInstanceID().ToString(),
                     buildObject,
-                    placedObjectWorldPosition);
+                    placedObjectWorldPosition,
+                    dir);
 
                 OnObjectPlaced?.Invoke(this, EventArgs.Empty);
                 return true;
@@ -252,7 +253,7 @@ namespace Nevelson.GridPlacementSystem
 
             foreach (var obj in preInitObject)
             {
-                if (PreInitBuild(obj.TilePosition, obj.GridObject, out PlacedGridObject preInitedPlacedObject))
+                if (PreInitBuild(obj.TilePosition, obj.GridObject, obj.Dir, out PlacedGridObject preInitedPlacedObject))
                 {
                     _placedGridObjects.Add(preInitedPlacedObject);
                 }
@@ -557,7 +558,8 @@ namespace Nevelson.GridPlacementSystem
             _placedGridObjects.Add(new PlacedGridObject(
                 placedObject.GetInstanceID().ToString(),
                 _selectedGridObjectSO,
-                placedObjectWorldPosition));
+                placedObjectWorldPosition,
+                _dir));
             OnObjectPlaced?.Invoke(this, EventArgs.Empty);
             return true;
         }
@@ -632,14 +634,19 @@ namespace Nevelson.GridPlacementSystem
             _placedGridObjects.Add(new PlacedGridObject(
                 placedObject.GetInstanceID().ToString(),
                 selectedGridObjectSO,
-                placedObjectWorldPosition
-                ));
+                placedObjectWorldPosition,
+                _dir));
             OnObjectPlaced?.Invoke(this, EventArgs.Empty);
             _lastDemolish = null;
         }
 
         void Rotate()
         {
+            if (_selectedGridObjectSO != null && !_selectedGridObjectSO.canRotate)
+            {
+                Debug.Log("This grid object SO is marked as not able to rotate");
+                return;
+            }
             _dir = GridPlacementObjectSO.GetNextDir(_dir);
         }
 
