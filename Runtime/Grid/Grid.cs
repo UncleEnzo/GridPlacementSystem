@@ -18,20 +18,20 @@ namespace Nevelson.GridPlacementSystem
         int _height;
 
         TGridObject[,] _gridArray;
-        Vector3 _originPosition;
+        //Vector3 _originPosition;
         TextMeshPro[,] debugTextArray;
 
         public int Width { get { return _width; } }
         public int Height { get { return _height; } }
         public float CellSize { get { return _cellSize; } }
 
-        public Grid(int width, int height, float cellSize, Vector3 originPosition, Func<Grid<TGridObject>, int, int, TGridObject> createGridObject, bool debug = false)
+        public Grid(int width, int height, float cellSize, Func<Grid<TGridObject>, int, int, TGridObject> createGridObject, bool debug = false)
         {
             _width = width;
             _height = height;
             _cellSize = cellSize;
             _gridArray = new TGridObject[width, height];
-            _originPosition = originPosition;
+            //_originPosition = originPosition;
 
             for (int x = 0; x < _gridArray.GetLength(0); x++)
             {
@@ -49,7 +49,7 @@ namespace Nevelson.GridPlacementSystem
                 {
                     for (int y = 0; y < _gridArray.GetLength(1); y++)
                     {
-                        var pos = new Vector3(x, y) * _cellSize + _originPosition;
+                        var pos = new Vector3(x, y) * _cellSize;
                         debugTextArray[x, y] = StaticFactory.CreateWorldText(
                          null,
 
@@ -110,13 +110,13 @@ namespace Nevelson.GridPlacementSystem
 
         public void GetXY(Vector3 worldPosition, out int x, out int y)
         {
-            x = Mathf.FloorToInt((worldPosition - _originPosition).x / _cellSize);
-            y = Mathf.FloorToInt((worldPosition - _originPosition).y / _cellSize);
+            x = Mathf.FloorToInt((worldPosition).x / _cellSize);
+            y = Mathf.FloorToInt((worldPosition).y / _cellSize);
         }
 
         public Vector3 GetWorldPosition(int x, int y)
         {
-            return new Vector3(x, y) * _cellSize + _originPosition;
+            return new Vector3(x, y) * _cellSize;
         }
     }
 }

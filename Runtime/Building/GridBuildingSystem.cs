@@ -21,7 +21,6 @@ namespace Nevelson.GridPlacementSystem
         [SerializeField] int _gridWidth = 15;
         [SerializeField] int _gridHeight = 10;
         [SerializeField] float _cellSize = 1;
-        [SerializeField] Vector3 _gridStartingPosition = Vector3.zero;
         [SerializeField] bool _isDebug = true;
         [SerializeField] GameObject _buildingSoundPrefab;
         [SerializeField] GameObject _worldGridSprite;
@@ -173,13 +172,12 @@ namespace Nevelson.GridPlacementSystem
                 _gridWidth,
                 _gridHeight,
                 _cellSize,
-                _gridStartingPosition,
                 (Grid<GridObject> g, int x, int y) =>
                 {
                     //this sets the world tile and also passes its reference to the grid object
                     //so it can control its color
                     GameObject tile = Instantiate(_worldGridSprite, transform);
-                    tile.transform.localPosition = new Vector3(x, y) * _cellSize + _gridStartingPosition;
+                    tile.transform.localPosition = new Vector3(x, y) * _cellSize;
                     return new GridObject(g, x, y, tile);
                 },
                 _isDebug);
