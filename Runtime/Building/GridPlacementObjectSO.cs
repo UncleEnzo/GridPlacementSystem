@@ -32,6 +32,9 @@ namespace Nevelson.GridPlacementSystem
         public int width;
         public int height;
 
+        [Header("Maximum copies of this object that can be placed. 0 == infinite")]
+        [Range(0, 1000)] public int maxPlaced = 0;
+
 
         public int GetRotationAngle(Dir dir)
         {

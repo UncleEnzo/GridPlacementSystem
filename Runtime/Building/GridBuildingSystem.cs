@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -77,6 +78,27 @@ namespace Nevelson.GridPlacementSystem
                 return;
             }
             PerformBuildAction(buildAction, -2);
+        }
+
+        public bool CheckIfMaxOfObjectPlaced(int selectedIndex)
+        {
+            if (selectedIndex < 0 || selectedIndex >= _gridObjects.Count)
+            {
+                Debug.LogError("Selected building index out of range");
+                return false;
+            }
+
+            //if the max placed is 0, the limit is infinite
+            GridPlacementObjectSO gridSO = _gridObjects[selectedIndex];
+            if (gridSO.maxPlaced == 0) return true;
+
+            int placedObjCount = _placedGridObjects.Where(x => x.GridObjectSO == gridSO).Count();
+            if (placedObjCount >= gridSO.maxPlaced)
+            {
+                Debug.Log($"Cannot place more {gridSO.name}. Max count {gridSO.maxPlaced}. Number placed {placedObjCount}");
+                return false;
+            }
+            return true;
         }
 
         public void ChangeGridObjectToPlace(int gridObjectIndex)
@@ -496,6 +518,13 @@ namespace Nevelson.GridPlacementSystem
             if (!CheckSurroundingSpace())
             {
                 Debug.Log("Can't build, space already taken");
+                return false;
+            }
+
+            int idx = _gridObjects.IndexOf(_selectedGridObjectSO);
+            if (!CheckIfMaxOfObjectPlaced(idx))
+            {
+                Debug.Log("Can't perform build because max count reached");
                 return false;
             }
 
