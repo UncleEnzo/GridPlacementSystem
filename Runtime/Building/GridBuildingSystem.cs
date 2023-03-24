@@ -238,7 +238,7 @@ namespace Nevelson.GridPlacementSystem
                 preInitedPlacedObject = new PlacedGridObject(
                     placedObject.GetInstanceID().ToString(),
                     buildObject,
-                    placedObjectWorldPosition,
+                    tilePos,
                     dir);
 
                 OnObjectPlaced?.Invoke(this, EventArgs.Empty);
