@@ -69,14 +69,14 @@ namespace Nevelson.GridPlacementSystem
             SELECT_GRID_OBJECT,
         }
 
-        public void PerformBuildAction(BuildAction buildAction)
+        public bool PerformBuildAction(BuildAction buildAction)
         {
             if (buildAction == BuildAction.SELECT_GRID_OBJECT)
             {
                 Debug.LogError("To perform Select Grid Object, call ChangeGridObjectToPlace Function instead");
-                return;
+                return false;
             }
-            PerformBuildAction(buildAction, -2);
+            return PerformBuildAction(buildAction, -2);
         }
 
         public bool CheckIfMaxOfObjectPlaced(int selectedIndex)
@@ -100,9 +100,9 @@ namespace Nevelson.GridPlacementSystem
             return true;
         }
 
-        public void ChangeGridObjectToPlace(int gridObjectIndex)
+        public bool ChangeGridObjectToPlace(int gridObjectIndex)
         {
-            PerformBuildAction(BuildAction.SELECT_GRID_OBJECT, gridObjectIndex);
+            return PerformBuildAction(BuildAction.SELECT_GRID_OBJECT, gridObjectIndex);
         }
 
         public void SetAllPreInitObjects(List<PreInitObject> preInitObjects)
@@ -258,31 +258,31 @@ namespace Nevelson.GridPlacementSystem
             _OnGridUpdate?.Invoke(_placedGridObjects);
         }
 
-        void PerformBuildAction(BuildAction buildAction, int gridObjectIndex)
+        bool PerformBuildAction(BuildAction buildAction, int gridObjectIndex)
         {
             //-1 == Deselect Grid object
             //-2 == Performing an action other than SelectGridObject and don't need index
             if (gridObjectIndex <= -3 || gridObjectIndex > _gridObjects.Count - 1)
             {
                 Debug.LogError($"{gridObjectIndex} is not out of bounds of the _gridObjects list");
-                return;
+                return false;
             }
             if (buildAction == BuildAction.DISPLAY_GRID)
             {
                 Debug.Log("Displaying grid");
                 DisplayGrid(true);
-                return;
+                return true;
             }
             if (buildAction == BuildAction.HIDE_GRID)
             {
                 Debug.Log("Hiding grid");
                 DisplayGrid(false);
-                return;
+                return true;
             }
             if (!_isGridDisplayed)
             {
                 Debug.LogWarning($"Not performing action {buildAction} because grid is not displayed");
-                return;
+                return false;
             }
             if (_selectedGridObjectSO == null)
             {
@@ -293,19 +293,19 @@ namespace Nevelson.GridPlacementSystem
             {
                 Debug.Log("Setting mode to Build Mode");
                 SetBuildMode(BuildMode.BUILD);
-                return;
+                return true;
             }
             if (buildAction == BuildAction.SET_DEMOLISH_MODE)
             {
                 Debug.Log("Setting mode to Demolish Mode");
                 SetBuildMode(BuildMode.DEMOLISH);
-                return;
+                return true;
             }
             if (buildAction == BuildAction.SET_MOVE_MODE)
             {
                 Debug.Log("Setting mode to Move Mode");
                 SetBuildMode(BuildMode.MOVE);
-                return;
+                return true;
             }
 
             switch (buildMode)
@@ -314,17 +314,15 @@ namespace Nevelson.GridPlacementSystem
                     if (buildAction == BuildAction.ACCEPT_BUTTON)
                     {
                         Debug.Log($"Build Mode is: {buildMode}, performing build action");
-                        if (Build())
-                        {
-                            _OnGridUpdate?.Invoke(_placedGridObjects);
-                        }
-                        break;
+                        bool ok = Build();
+                        if (ok) _OnGridUpdate?.Invoke(_placedGridObjects);
+                        return ok;
                     }
                     if (buildAction == BuildAction.ROTATE)
                     {
                         Debug.Log($"Build Mode is: {buildMode}, performing rotate");
                         Rotate();
-                        break;
+                        return true;
                     }
                     if (buildAction == BuildAction.SELECT_GRID_OBJECT)
                     {
@@ -332,58 +330,54 @@ namespace Nevelson.GridPlacementSystem
                         {
                             Debug.Log($"Build Mode is: {buildMode}, Deselecting grid object");
                             DeselectBuildObject();
-                            break;
+                            return true;
                         }
 
                         Debug.Log($"Build Mode is: {buildMode}, Selecting grid object: {gridObjectIndex}");
                         SelectGridObject(gridObjectIndex, _gridObjects);
-                        break;
+                        return true;
                     }
-                    break;
+                    return false;
                 case BuildMode.MOVE:
                     if (!_movingObject && buildAction == BuildAction.ACCEPT_BUTTON)
                     {
                         Debug.Log($"Build Mode is: {buildMode}, selecting object to move");
                         SelectMoveObject();
-                        break;
+                        return true;
                     }
                     if (_movingObject && buildAction == BuildAction.ACCEPT_BUTTON)
                     {
                         Debug.Log($"Build Mode is: {buildMode}, moving selected object");
-                        if (Move())
-                        {
-                            _OnGridUpdate?.Invoke(_placedGridObjects);
-                        }
-                        break;
+                        bool ok = Move();
+                        if (ok) _OnGridUpdate?.Invoke(_placedGridObjects);
+                        return ok;
                     }
                     if (_movingObject && buildAction == BuildAction.UNDO_BUTTON)
                     {
                         Debug.Log($"Build Mode is: {buildMode}, cancelling move");
                         UndoSelectedMoveObject();
                         DeselectBuildObject();
-                        break;
+                        return true;
                     }
                     if (_movingObject && buildAction == BuildAction.ROTATE)
                     {
                         Debug.Log($"Build Mode is: {buildMode}, rotating object");
                         Rotate();
-                        break;
+                        return true;
                     }
-                    break;
+                    return false;
                 case BuildMode.DEMOLISH:
                     if (buildAction == BuildAction.ACCEPT_BUTTON)
                     {
                         Debug.Log($"Build Mode is: {buildMode}, performing Demolish");
-                        if (Demolish(false))
-                        {
-                            _OnGridUpdate?.Invoke(_placedGridObjects);
-                        }
-                        break;
+                        bool ok = Demolish(false);
+                        if (ok) _OnGridUpdate?.Invoke(_placedGridObjects);
+                        return ok;
                     }
-                    break;
+                    return false;
                 default:
                     Debug.LogError("Build mode doesn't exist");
-                    break;
+                    return false;
             }
         }
 
