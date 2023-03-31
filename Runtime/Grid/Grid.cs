@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using TMPro;
 using UnityEngine;
 
@@ -27,7 +26,7 @@ namespace Nevelson.GridPlacementSystem
         public float CellSize { get { return _cellSize; } }
 
         public Grid(int width, int height, float cellSize,
-            Vector2Int[] ignoredTiles,
+            IgnoreRanges[] ignoredTilesRanges,
             Func<Grid<TGridObject>, int, int, TGridObject> createGridObject,
             Transform transform, bool debug = false)
         {
@@ -37,14 +36,11 @@ namespace Nevelson.GridPlacementSystem
             _gridArray = new TGridObject[width, height];
             _transform = transform;
 
-            //todo IGNORE TILES LOGIC
-
             for (int x = 0; x < _gridArray.GetLength(0); x++)
             {
                 for (int y = 0; y < _gridArray.GetLength(1); y++)
                 {
-                    if (ignoredTiles.Contains(new Vector2Int(x, y))) continue;
-
+                    if (IsIgnoredTile(x, y, ignoredTilesRanges)) continue;
                     _gridArray[x, y] = createGridObject(this, x, y);
                 }
             }
@@ -57,7 +53,7 @@ namespace Nevelson.GridPlacementSystem
                 {
                     for (int y = 0; y < _gridArray.GetLength(1); y++)
                     {
-                        if (ignoredTiles.Contains(new Vector2Int(x, y))) continue;
+                        if (IsIgnoredTile(x, y, ignoredTilesRanges)) continue;
                         var pos = new Vector3(x, y) * _cellSize;
                         debugTextArray[x, y] = StaticFactory.CreateWorldText(
                          transform,
@@ -137,6 +133,44 @@ namespace Nevelson.GridPlacementSystem
         public Vector3 GetWorldPosition(int x, int y)
         {
             return new Vector3(x, y) * _cellSize + _transform.position;
+        }
+
+        bool IsIgnoredTile(int x, int y, IgnoreRanges[] ignoredTilesRanges)
+        {
+            //I think the problem is that it's presuming END is larger than 
+            return Array.Exists(ignoredTilesRanges, range =>
+            {
+                if (range.start.x < range.end.x)
+                {
+                    if (x < range.start.x || x > range.end.x)
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (x > range.start.x || x < range.end.x)
+                    {
+                        return false;
+                    }
+                }
+
+                if (range.start.y < range.end.y)
+                {
+                    if (y < range.start.y || y > range.end.y)
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (y > range.start.y || y < range.end.y)
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            });
         }
     }
 }

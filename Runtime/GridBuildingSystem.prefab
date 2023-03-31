@@ -52,7 +52,7 @@ MonoBehaviour:
   _gridWidth: 40
   _gridHeight: 25
   _cellSize: 1
-  _isDebug: 0
+  _isDebug: 1
   _buildingSoundPrefab: {fileID: 4305903890773607726, guid: 2793789cc8952e045b734f22ad8e3770, type: 3}
   _worldGridSprite: {fileID: 4173932048244737505, guid: 16ff6129e77d86547b1090346a001795, type: 3}
   _buildingGhostPrefab: {fileID: 155848982808662930, guid: 98250ed60f2ab4648ae5cb6ba6ac21e5, type: 3}
@@ -74,17 +74,11 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-  ignoredTiles:
-  - {x: 10, y: 10}
-  - {x: 10, y: 11}
-  - {x: 10, y: 12}
-  - {x: 10, y: 13}
-  - {x: 11, y: 13}
-  - {x: 11, y: 12}
-  - {x: 12, y: 13}
-  - {x: 12, y: 12}
-  - {x: 13, y: 13}
-  - {x: 13, y: 12}
+  ignoredTileRanges:
+  - start: {x: 30, y: 0}
+    end: {x: 39, y: 5}
+  - start: {x: 25, y: 15}
+    end: {x: 20, y: 10}
 --- !u!114 &7087304623253990752
 MonoBehaviour:
   m_ObjectHideFlags: 0

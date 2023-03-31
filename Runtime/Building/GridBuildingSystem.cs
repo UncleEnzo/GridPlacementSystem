@@ -8,6 +8,13 @@ namespace Nevelson.GridPlacementSystem
 {
     public enum BuildMode { BUILD, MOVE, DEMOLISH }
 
+    [Serializable]
+    public class IgnoreRanges
+    {
+        public Vector2Int start;
+        public Vector2Int end;
+    }
+
     public class GridBuildingSystem : MonoBehaviour, IPreinitGrid, IGridObjectPlace
     {
         [Header("Place grid objects here you want instantiated before game starts")]
@@ -30,7 +37,7 @@ namespace Nevelson.GridPlacementSystem
         [SerializeField] UnityEvent<List<PlacedGridObject>> _OnGridUpdate;
 
         [Header("Tile positions you don't want included in the array.  Use Debug to find positions")]
-        [SerializeField] Vector2Int[] ignoredTiles;
+        [SerializeField] IgnoreRanges[] ignoredTileRanges;
 
         BuildMode buildMode = BuildMode.BUILD;
         List<PlacedGridObject> _placedGridObjects = new List<PlacedGridObject>();
@@ -322,7 +329,7 @@ namespace Nevelson.GridPlacementSystem
                 _gridWidth,
                 _gridHeight,
                 _cellSize,
-                ignoredTiles,
+                ignoredTileRanges,
                 (Grid<GridObject> g, int x, int y) =>
                 {
                     //this sets the world tile and also passes its reference to the grid object
