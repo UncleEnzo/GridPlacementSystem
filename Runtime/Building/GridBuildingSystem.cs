@@ -29,6 +29,9 @@ namespace Nevelson.GridPlacementSystem
         [SerializeField] AudioClip _demolishSound;
         [SerializeField] UnityEvent<List<PlacedGridObject>> _OnGridUpdate;
 
+        [Header("Tile positions you don't want included in the array.  Use Debug to find positions")]
+        [SerializeField] Vector2Int[] ignoredTiles;
+
         BuildMode buildMode = BuildMode.BUILD;
         List<PlacedGridObject> _placedGridObjects = new List<PlacedGridObject>();
 
@@ -307,7 +310,6 @@ namespace Nevelson.GridPlacementSystem
         }
         #endregion
 
-
         void Start()
         {
             Debug.Log($"Starting grid:\n" +
@@ -320,6 +322,7 @@ namespace Nevelson.GridPlacementSystem
                 _gridWidth,
                 _gridHeight,
                 _cellSize,
+                ignoredTiles,
                 (Grid<GridObject> g, int x, int y) =>
                 {
                     //this sets the world tile and also passes its reference to the grid object
@@ -335,6 +338,8 @@ namespace Nevelson.GridPlacementSystem
             PreInstantiateGridObjects(_preInitGridObjects);
             DisplayGrid(_displayGridOnStart);
         }
+
+        //END TODO STUFF
 
         void OnApplicationQuit()
         {

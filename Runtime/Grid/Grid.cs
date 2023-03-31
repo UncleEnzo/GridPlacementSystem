@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 
@@ -25,17 +26,25 @@ namespace Nevelson.GridPlacementSystem
         public int Height { get { return _height; } }
         public float CellSize { get { return _cellSize; } }
 
-        public Grid(int width, int height, float cellSize, Func<Grid<TGridObject>, int, int, TGridObject> createGridObject, Transform transform, bool debug = false)
+        public Grid(int width, int height, float cellSize,
+            Vector2Int[] ignoredTiles,
+            Func<Grid<TGridObject>, int, int, TGridObject> createGridObject,
+            Transform transform, bool debug = false)
         {
             _width = width;
             _height = height;
             _cellSize = cellSize;
             _gridArray = new TGridObject[width, height];
             _transform = transform;
+
+            //todo IGNORE TILES LOGIC
+
             for (int x = 0; x < _gridArray.GetLength(0); x++)
             {
                 for (int y = 0; y < _gridArray.GetLength(1); y++)
                 {
+                    if (ignoredTiles.Contains(new Vector2Int(x, y))) continue;
+
                     _gridArray[x, y] = createGridObject(this, x, y);
                 }
             }
@@ -48,6 +57,7 @@ namespace Nevelson.GridPlacementSystem
                 {
                     for (int y = 0; y < _gridArray.GetLength(1); y++)
                     {
+                        if (ignoredTiles.Contains(new Vector2Int(x, y))) continue;
                         var pos = new Vector3(x, y) * _cellSize;
                         debugTextArray[x, y] = StaticFactory.CreateWorldText(
                          transform,

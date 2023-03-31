@@ -57,7 +57,6 @@ namespace Nevelson.GridPlacementSystem
 
         void Instance_OnSelectedChanged(object sender, EventArgs e)
         {
-            Debug.Log("THIS HAPPENED");
             RefreshVisual();
         }
 
