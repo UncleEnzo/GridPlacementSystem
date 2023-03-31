@@ -32,92 +32,83 @@ namespace Nevelson.GridPlacementSystem
         void Start()
         {
             GBS.AddPreInitObjects(preInitObjs);
-
-            //testing heat map
-            //_heatGrid = new Grid<HeatMapGridObject>(10, 1, 2f, new Vector3(0, 3, 0),
-            //    (Grid<HeatMapGridObject> g, int x, int y) => new HeatMapGridObject(g, x, y), true);
-            //heatmapVisual.SetGrid(_heatGrid);
-
-            //testing string grid
-            //_stringGrid = new Grid<StringGridObject>(10, 1, 2f, new Vector3(0, 0, 0),
-            //    (Grid<StringGridObject> g, int x, int y) => new StringGridObject(g, x, y), true);
         }
 
         void Update()
         {
+            if (Input.GetKeyDown(KeyCode.Z))
+            {
+                var placedObj = GBS.GetPlaceObjInfoAtMousePos();
+                if (placedObj != null) Debug.Log(placedObj.ToString());
+            }
+
             if (Input.GetKeyDown(KeyCode.D))
             {
-                GBS.PerformBuildAction(GridBuildingSystem.BuildAction.DISPLAY_GRID);
+                GBS.DisplayGrid(true);
             }
 
             if (Input.GetKeyDown(KeyCode.H))
             {
-                GBS.PerformBuildAction(GridBuildingSystem.BuildAction.HIDE_GRID);
+                GBS.DisplayGrid(false);
             }
 
             if (Input.GetKeyDown(KeyCode.B))
             {
-                GBS.PerformBuildAction(GridBuildingSystem.BuildAction.SET_BUILD_MODE);
+                GBS.SetBuildMode(BuildMode.BUILD);
             }
 
             //D is for display so I just changed it
             if (Input.GetKeyDown(KeyCode.G))
             {
-                GBS.PerformBuildAction(GridBuildingSystem.BuildAction.SET_DEMOLISH_MODE);
+                GBS.SetBuildMode(BuildMode.DEMOLISH);
             }
 
             if (Input.GetKeyDown(KeyCode.M))
             {
-                GBS.PerformBuildAction(GridBuildingSystem.BuildAction.SET_MOVE_MODE);
+                GBS.SetBuildMode(BuildMode.MOVE);
             }
 
             if (Input.GetMouseButtonDown(0))
             {
-                GBS.PerformBuildAction(GridBuildingSystem.BuildAction.ACCEPT_BUTTON);
+                switch (GBS.BuildMode)
+                {
+                    case BuildMode.BUILD:
+                        GBS.BuildSelectedObject();
+                        break;
+                    case BuildMode.DEMOLISH:
+                        GBS.DemolishObject();
+                        break;
+                    case BuildMode.MOVE:
+                        GBS.PickAndPlaceMoveObject();
+                        break;
+                }
             }
 
             if (Input.GetMouseButtonDown(1))
             {
-                GBS.PerformBuildAction(GridBuildingSystem.BuildAction.UNDO_BUTTON);
+                GBS.UndoMove();
             }
 
             if (Input.GetKeyDown(KeyCode.R))
             {
-                GBS.PerformBuildAction(GridBuildingSystem.BuildAction.ROTATE);
+                GBS.RotateSelectedObject();
             }
 
             if (Input.GetKeyDown(KeyCode.Alpha0))
             {
-                GBS.ChangeGridObjectToPlace(-1);
+                GBS.ChangeSelectedBuildObject(-1);
             }
 
             if (Input.GetKeyDown(KeyCode.Alpha1))
             {
-                GBS.ChangeGridObjectToPlace(0);
+                GBS.ChangeSelectedBuildObject(0);
             }
 
-            if (Input.GetKeyDown(KeyCode.Alpha2))
-            {
-                GBS.ChangeGridObjectToPlace(1);
-            }
-
-            //Vector3 pos = GetMouseWorldPosition();
-            //if (Input.GetMouseButtonDown(0))
+            //not in the list currently
+            //if (Input.GetKeyDown(KeyCode.Alpha2))
             //{
-            //    HeatMapGridObject heatMapGridObject = _heatGrid.GetGridObject(pos);
-            //    if (heatMapGridObject != null) heatMapGridObject.AddValue(5);
-            //    heatmapVisual.SetGrid(_heatGrid);
+            //    GBS.ChangeSelectedBuildObject(1);
             //}
-
-            //if (Input.GetKeyDown(KeyCode.A)) _stringGrid.GetGridObject(pos).AddLetter("A");
-            //if (Input.GetKeyDown(KeyCode.Alpha1)) _stringGrid.GetGridObject(pos).AddNumber("1");
         }
-
-        //Vector3 GetMouseWorldPosition()
-        //{
-        //    Vector3 vec = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        //    vec.z = 0f;
-        //    return vec;
-        //}
     }
 }

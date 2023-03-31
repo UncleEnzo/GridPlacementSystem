@@ -6,17 +6,16 @@ using UnityEngine.Events;
 
 namespace Nevelson.GridPlacementSystem
 {
-    public class GridBuildingSystem : MonoBehaviour
-    {
-        enum BuildMode { BUILD, MOVE, DEMOLISH }
+    public enum BuildMode { BUILD, MOVE, DEMOLISH }
 
+    public class GridBuildingSystem : MonoBehaviour, IPreinitGrid, IGridObjectPlace
+    {
         [Header("Place grid objects here you want instantiated before game starts")]
         [SerializeField] List<PreInitObject> _preInitGridObjects;
 
         [Header("Place objects here you want player to be able to instantiate on build")]
         [SerializeField] List<GridPlacementObjectSO> _gridObjects;
-
-        [SerializeField] BuildMode buildMode = BuildMode.BUILD;
+        [SerializeField] Color _filledTileColor;
         [SerializeField] bool _displayGridOnStart = false;
         [SerializeField] int _gridWidth = 15;
         [SerializeField] int _gridHeight = 10;
@@ -26,9 +25,11 @@ namespace Nevelson.GridPlacementSystem
         [SerializeField] GameObject _worldGridSprite;
         [SerializeField] GameObject _buildingGhostPrefab;
         [SerializeField] AudioClip _buildSound;
+        [SerializeField] AudioClip _moveSound;
         [SerializeField] AudioClip _demolishSound;
         [SerializeField] UnityEvent<List<PlacedGridObject>> _OnGridUpdate;
 
+        BuildMode buildMode = BuildMode.BUILD;
         List<PlacedGridObject> _placedGridObjects = new List<PlacedGridObject>();
 
         Grid<GridObject> _grid;
@@ -54,58 +55,35 @@ namespace Nevelson.GridPlacementSystem
 
         public event EventHandler OnSelectedChanged;
         public event EventHandler OnObjectPlaced;
-        public GridPlacementObjectSO SelectedGridObject { get => _selectedGridObjectSO; }
 
-        public enum BuildAction
+        public GridPlacementObjectSO SelectedGridObject() { return _selectedGridObjectSO; }
+
+        public void Test_DefaultInit()
         {
-            DISPLAY_GRID,
-            HIDE_GRID,
-            SET_BUILD_MODE,
-            SET_DEMOLISH_MODE,
-            SET_MOVE_MODE,
-            ACCEPT_BUTTON,
-            UNDO_BUTTON,
-            ROTATE,
-            SELECT_GRID_OBJECT,
+            Debug.Log("Performing default init");
+            _gridWidth = 20;
+            _gridHeight = 20;
+            _cellSize = 1;
+            _displayGridOnStart = false;
+            _isDebug = false;
+            //_buildingSoundPrefab = Resources.Load<>();
+            //_worldGridSprite = Resources.Load<>();
+            //_buildingGhostPrefab = Resources.Load<>();
+            //_buildSound = Resources.Load<>();
+            //_demolishSound = Resources.Load<>();
+            _OnGridUpdate.AddListener((List<PlacedGridObject> p) => Debug.Log(p.ToString()));
         }
 
-        public bool PerformBuildAction(BuildAction buildAction)
+        public void AddPlaceableGridObject(GridPlacementObjectSO[] gridObjects)
         {
-            if (buildAction == BuildAction.SELECT_GRID_OBJECT)
+            foreach (GridPlacementObjectSO obj in gridObjects)
             {
-                Debug.LogError("To perform Select Grid Object, call ChangeGridObjectToPlace Function instead");
-                return false;
+                _gridObjects.Add(obj);
             }
-            return PerformBuildAction(buildAction, -2);
         }
 
-        public bool CheckIfMaxOfObjectPlaced(int selectedIndex)
-        {
-            if (selectedIndex < 0 || selectedIndex >= _gridObjects.Count)
-            {
-                Debug.LogError("Selected building index out of range");
-                return false;
-            }
-
-            //if the max placed is 0, the limit is infinite
-            GridPlacementObjectSO gridSO = _gridObjects[selectedIndex];
-            if (gridSO.maxPlaced == 0) return true;
-
-            int placedObjCount = _placedGridObjects.Where(x => x.GridObjectSO == gridSO).Count();
-            if (placedObjCount >= gridSO.maxPlaced)
-            {
-                Debug.Log($"Cannot place more {gridSO.name}. Max count {gridSO.maxPlaced}. Number placed {placedObjCount}");
-                return false;
-            }
-            return true;
-        }
-
-        public bool ChangeGridObjectToPlace(int gridObjectIndex)
-        {
-            return PerformBuildAction(BuildAction.SELECT_GRID_OBJECT, gridObjectIndex);
-        }
-
-        public void SetAllPreInitObjects(List<PreInitObject> preInitObjects)
+        #region PreinitOperations
+        public void ReplacePreInitObjectsList(List<PreInitObject> preInitObjects)
         {
             _preInitGridObjects.Clear();
             _preInitGridObjects = preInitObjects;
@@ -118,49 +96,225 @@ namespace Nevelson.GridPlacementSystem
                 _preInitGridObjects.Add(preInit);
             }
         }
+        #endregion
 
-        public void AddPlaceableGridObject(GridPlacementObjectSO[] gridObjects)
-        {
-            foreach (GridPlacementObjectSO obj in gridObjects)
-            {
-                _gridObjects.Add(obj);
-            }
-        }
+        #region GridOperations
+        public BuildMode BuildMode { get => buildMode; }
 
-        //-- above functions are used outside of the package, everything else is kind of internal
-
-        public Vector3 GetMouseWorldSnappedPosition()
-        {
-            Vector3 mousePosition = GetMouseWorldPosition();
-            if (_selectedGridObjectSO == null) return mousePosition;
-
-            _grid.GetXY(mousePosition, out int x, out int y);
-            Vector2Int rotationOffset = _selectedGridObjectSO.GetRotationOffset(_dir);
-            Vector3 placedObjectWorldPosition = _grid.GetWorldPosition(x, y) + new Vector3(rotationOffset.x, rotationOffset.y) * _grid.CellSize;
-            return placedObjectWorldPosition;
-        }
-        public Quaternion GetPlacedObjectRotation()
-        {
-            return _selectedGridObjectSO == null ?
-                Quaternion.identity :
-                Quaternion.Euler(0, 0, -_selectedGridObjectSO.GetRotationAngle(_dir));
-        }
-        public bool CheckSurroundingSpace()
+        public PlacedObjectData GetPlaceObjInfoAtMousePos()
         {
             _grid.GetXY(GetMouseWorldPosition(), out int x, out int y);
-            Vector2Int placedObjectOrigin = new Vector2Int(x, y);
-            List<Vector2Int> gridPositionList = _selectedGridObjectSO.GetGridPositionList(placedObjectOrigin, _dir);
-            foreach (Vector2Int gridPosition in gridPositionList)
+            GridObject gridObject = _grid.GetGridObject(x, y);
+
+            if (gridObject == null) return null;
+            if (gridObject.PlacedObject == null) return null;
+
+            return gridObject.PlacedObject.GetData();
+        }
+
+        public bool DisplayGrid(bool isGridDisplayed)
+        {
+            _isGridDisplayed = isGridDisplayed;
+            _buildingGhost.SetActive(_isGridDisplayed);
+            foreach (Transform child in transform)
             {
-                //if the surrounding tile is outside grid bounds or can't build
-                GridObject gridObj = _grid.GetGridObject(gridPosition.x, gridPosition.y);
-                if (gridObj == null || !gridObj.CanBuild()) return false;
+                child.gameObject.SetActive(_isGridDisplayed);
             }
+            SetBuildMode(BuildMode.BUILD);
+            Debug.Log($"Displaying grid: {isGridDisplayed} and Auto setting to build mode");
             return true;
         }
 
+        public bool SetBuildMode(BuildMode buildMode)
+        {
+            if (!VerifyBuildAction()) return false;
+            PerformRotationReset();
+
+            if (this.buildMode == buildMode)
+            {
+                Debug.Log($"Not setting build mode because mode is already {buildMode}");
+                return false;
+            }
+            this.buildMode = buildMode;
+            switch (buildMode)
+            {
+                case BuildMode.BUILD:
+                    Debug.Log("Build Mode Activated");
+                    UndoSelectedMoveObject();
+                    SelectGridObject(0, _gridObjects);
+                    return true;
+                case BuildMode.DEMOLISH:
+                    Debug.Log("Demolish Mode Activated");
+                    UndoSelectedMoveObject();
+                    DeselectBuildObject();
+                    return true;
+                case BuildMode.MOVE:
+                    Debug.Log("Move Mode Activated");
+                    DeselectBuildObject();
+                    return true;
+                default:
+                    Debug.LogError("Build mode doesn't exist");
+                    return false;
+            }
+        }
+
+        public bool BuildSelectedObject()
+        {
+            if (!VerifyBuildAction()) return false;
+            PerformRotationReset();
+            if (buildMode != BuildMode.BUILD)
+            {
+                Debug.LogWarning($"Attempting to perform build action while build mode set to: {buildMode}. Not allowing");
+                return false;
+            }
+
+            Debug.Log($"Build Mode is: {buildMode}. Attempting to build: {_selectedGridObjectSO.name}");
+
+            bool ok = Build(_buildSound);
+            if (!ok)
+            {
+                Debug.Log($"Could not build {_selectedGridObjectSO.name} at location.");
+                return false;
+            }
+
+            _OnGridUpdate?.Invoke(_placedGridObjects);
+            Debug.Log($"Build of {_selectedGridObjectSO.name} was successful.");
+            return ok;
+        }
+
+        public bool RotateSelectedObject()
+        {
+            if (!VerifyBuildAction()) return false;
+            PerformRotationReset();
+            if (buildMode != BuildMode.BUILD && buildMode != BuildMode.MOVE)
+            {
+                Debug.LogWarning($"Attempting to perform rotate action while build mode set to: {buildMode}. Not allowing");
+                return false;
+            }
+
+            if (_selectedGridObjectSO == null)
+            {
+                Debug.Log("Not object selected to rotate. Not Performing.");
+                return false;
+            }
+
+            Debug.Log($"Build Mode is: {buildMode}, performing rotate");
+            Rotate();
+            return true;
+        }
+
+        public bool ChangeSelectedBuildObject(int gridObjectIndex)
+        {
+            if (!VerifyBuildAction()) return false;
+            PerformRotationReset();
+            if (buildMode != BuildMode.BUILD)
+            {
+                Debug.LogWarning($"Attempting to perform change selected object build action while build mode set to: {buildMode}. Not allowing");
+                return false;
+            }
+
+            if (gridObjectIndex < -1 || gridObjectIndex > _gridObjects.Count - 1)
+            {
+                Debug.LogError($"{gridObjectIndex} is not out of bounds of the _gridObjects list");
+                return false;
+            }
+
+            if (gridObjectIndex == -1)
+            {
+                Debug.Log($"Build Mode is: {buildMode}, Deselecting grid object");
+                DeselectBuildObject();
+                return true;
+            }
+
+            Debug.Log($"Build Mode is: {buildMode}, Selecting grid object: {gridObjectIndex}");
+            SelectGridObject(gridObjectIndex, _gridObjects);
+            return true;
+
+        }
+
+        //note: this will perform both the move and the placement and just report which it is
+        public bool PickAndPlaceMoveObject()
+        {
+            if (!VerifyBuildAction()) return false;
+            PerformRotationReset();
+            if (buildMode != BuildMode.MOVE)
+            {
+                Debug.LogWarning($"Attempting to perform build action while build mode set to: {buildMode}. Not allowing");
+                return false;
+            }
+
+            if (!_movingObject)
+            {
+                Debug.Log($"Build Mode is: {buildMode}, Selecting object to move");
+                SelectMoveObject();
+                return true;
+            }
+
+            Debug.Log($"Build Mode is: {buildMode}, moving selected object");
+            bool ok = Move();
+            if (!ok)
+            {
+                Debug.Log($"Failed to place {_selectedGridObjectSO.name} at position");
+                return false;
+            }
+
+            _OnGridUpdate?.Invoke(_placedGridObjects);
+            return ok;
+        }
+
+        public bool UndoMove()
+        {
+            if (!VerifyBuildAction()) return false;
+            PerformRotationReset();
+            if (buildMode != BuildMode.MOVE)
+            {
+                Debug.LogWarning($"Attempting to perform build action while build mode set to: {buildMode}. Not allowing");
+                return false;
+            }
+
+            if (!_movingObject)
+            {
+                Debug.Log($"Attempting to undo move operation but no object selected to move. Not performing.");
+                return false;
+            }
+
+            Debug.Log($"Build Mode is: {buildMode}, undoing move of {_selectedGridObjectSO.name}");
+            UndoSelectedMoveObject();
+            DeselectBuildObject();
+            return true;
+        }
+
+        public bool DemolishObject()
+        {
+            if (!VerifyBuildAction()) return false;
+            PerformRotationReset();
+            if (buildMode != BuildMode.DEMOLISH)
+            {
+                Debug.LogWarning($"Attempting to perform demolish action while build mode set to: {buildMode}. Not allowing");
+                return false;
+            }
+
+            Debug.Log($"Build Mode is: {buildMode}, performing Demolish");
+            bool ok = Demolish(false);
+            if (!ok)
+            {
+                Debug.Log($"Did not demolish object at position");
+                return false;
+            }
+
+            _OnGridUpdate?.Invoke(_placedGridObjects);
+            return ok;
+        }
+        #endregion
+
+
         void Start()
         {
+            Debug.Log($"Starting grid:\n" +
+                $"Preinit objects {_preInitGridObjects.Count}\n" +
+                $"width {_gridWidth} x height {_gridHeight} | Cellsize {_cellSize}\n" +
+                $"Debug: {_isDebug}" +
+                $"Transform position {transform.position}");
             _selectedGridObjectSO = _gridObjects[0];
             _grid = new Grid<GridObject>(
                 _gridWidth,
@@ -173,7 +327,7 @@ namespace Nevelson.GridPlacementSystem
                     GameObject tile = Instantiate(_worldGridSprite, transform);
                     tile.transform.localPosition = new Vector3(x, y) * _cellSize;
                     Vector3Int gridTransform = Vector3Int.RoundToInt(tile.transform.localPosition);
-                    return new GridObject(g, gridTransform.x, gridTransform.y, tile);
+                    return new GridObject(g, gridTransform.x, gridTransform.y, tile, _filledTileColor);
                 },
                 transform,
                 _isDebug);
@@ -258,174 +412,15 @@ namespace Nevelson.GridPlacementSystem
             _OnGridUpdate?.Invoke(_placedGridObjects);
         }
 
-        bool PerformBuildAction(BuildAction buildAction, int gridObjectIndex)
-        {
-            //-1 == Deselect Grid object
-            //-2 == Performing an action other than SelectGridObject and don't need index
-            if (gridObjectIndex <= -3 || gridObjectIndex > _gridObjects.Count - 1)
-            {
-                Debug.LogError($"{gridObjectIndex} is not out of bounds of the _gridObjects list");
-                return false;
-            }
-            if (buildAction == BuildAction.DISPLAY_GRID)
-            {
-                Debug.Log("Displaying grid");
-                DisplayGrid(true);
-                return true;
-            }
-            if (buildAction == BuildAction.HIDE_GRID)
-            {
-                Debug.Log("Hiding grid");
-                DisplayGrid(false);
-                return true;
-            }
-            if (!_isGridDisplayed)
-            {
-                Debug.LogWarning($"Not performing action {buildAction} because grid is not displayed");
-                return false;
-            }
-            if (_selectedGridObjectSO == null)
-            {
-                Debug.Log("Resetting rotation");
-                ResetRotation();
-            }
-            if (buildAction == BuildAction.SET_BUILD_MODE)
-            {
-                Debug.Log("Setting mode to Build Mode");
-                SetBuildMode(BuildMode.BUILD);
-                return true;
-            }
-            if (buildAction == BuildAction.SET_DEMOLISH_MODE)
-            {
-                Debug.Log("Setting mode to Demolish Mode");
-                SetBuildMode(BuildMode.DEMOLISH);
-                return true;
-            }
-            if (buildAction == BuildAction.SET_MOVE_MODE)
-            {
-                Debug.Log("Setting mode to Move Mode");
-                SetBuildMode(BuildMode.MOVE);
-                return true;
-            }
-
-            switch (buildMode)
-            {
-                case BuildMode.BUILD:
-                    if (buildAction == BuildAction.ACCEPT_BUTTON)
-                    {
-                        Debug.Log($"Build Mode is: {buildMode}, performing build action");
-                        bool ok = Build();
-                        if (ok) _OnGridUpdate?.Invoke(_placedGridObjects);
-                        return ok;
-                    }
-                    if (buildAction == BuildAction.ROTATE)
-                    {
-                        Debug.Log($"Build Mode is: {buildMode}, performing rotate");
-                        Rotate();
-                        return true;
-                    }
-                    if (buildAction == BuildAction.SELECT_GRID_OBJECT)
-                    {
-                        if (gridObjectIndex == -1)
-                        {
-                            Debug.Log($"Build Mode is: {buildMode}, Deselecting grid object");
-                            DeselectBuildObject();
-                            return true;
-                        }
-
-                        Debug.Log($"Build Mode is: {buildMode}, Selecting grid object: {gridObjectIndex}");
-                        SelectGridObject(gridObjectIndex, _gridObjects);
-                        return true;
-                    }
-                    return false;
-                case BuildMode.MOVE:
-                    if (!_movingObject && buildAction == BuildAction.ACCEPT_BUTTON)
-                    {
-                        Debug.Log($"Build Mode is: {buildMode}, selecting object to move");
-                        SelectMoveObject();
-                        return true;
-                    }
-                    if (_movingObject && buildAction == BuildAction.ACCEPT_BUTTON)
-                    {
-                        Debug.Log($"Build Mode is: {buildMode}, moving selected object");
-                        bool ok = Move();
-                        if (ok) _OnGridUpdate?.Invoke(_placedGridObjects);
-                        return ok;
-                    }
-                    if (_movingObject && buildAction == BuildAction.UNDO_BUTTON)
-                    {
-                        Debug.Log($"Build Mode is: {buildMode}, cancelling move");
-                        UndoSelectedMoveObject();
-                        DeselectBuildObject();
-                        return true;
-                    }
-                    if (_movingObject && buildAction == BuildAction.ROTATE)
-                    {
-                        Debug.Log($"Build Mode is: {buildMode}, rotating object");
-                        Rotate();
-                        return true;
-                    }
-                    return false;
-                case BuildMode.DEMOLISH:
-                    if (buildAction == BuildAction.ACCEPT_BUTTON)
-                    {
-                        Debug.Log($"Build Mode is: {buildMode}, performing Demolish");
-                        bool ok = Demolish(false);
-                        if (ok) _OnGridUpdate?.Invoke(_placedGridObjects);
-                        return ok;
-                    }
-                    return false;
-                default:
-                    Debug.LogError("Build mode doesn't exist");
-                    return false;
-            }
-        }
-
-        void DisplayGrid(bool isGridDisplayed)
-        {
-            _isGridDisplayed = isGridDisplayed;
-            _buildingGhost.SetActive(_isGridDisplayed);
-            foreach (Transform child in transform)
-            {
-                child.gameObject.SetActive(_isGridDisplayed);
-            }
-            SetBuildMode(BuildMode.BUILD);
-        }
-
         void CreateBuildingGhost()
         {
             _buildingGhost = Instantiate(_buildingGhostPrefab);
-            _buildingGhost.GetComponent<BuildingGhost>().Init(this);
-        }
-
-        void SetBuildMode(BuildMode buildMode)
-        {
-            if (this.buildMode == buildMode)
-            {
-                Debug.Log($"Not setting build mode because mode is already {buildMode}");
-                return;
-            }
-            this.buildMode = buildMode;
-            switch (buildMode)
-            {
-                case BuildMode.BUILD:
-                    Debug.Log("Build Mode Activated");
-                    UndoSelectedMoveObject();
-                    SelectGridObject(0, _gridObjects);
-                    break;
-                case BuildMode.DEMOLISH:
-                    Debug.Log("Demolish Mode Activated");
-                    UndoSelectedMoveObject();
-                    DeselectBuildObject();
-                    break;
-                case BuildMode.MOVE:
-                    Debug.Log("Move Mode Activated");
-                    DeselectBuildObject();
-                    break;
-                default:
-                    Debug.LogError("Build mode doesn't exist");
-                    break;
-            }
+            _buildingGhost.GetComponent<BuildingGhost>().Init(
+                GetMouseWorldSnappedPosition,
+                GetPlacedObjectRotation,
+                CheckSurroundingSpace,
+                SelectedGridObject,
+                this);
         }
 
         void SelectMoveObject()
@@ -497,14 +492,14 @@ namespace Nevelson.GridPlacementSystem
 
         bool Move()
         {
-            if (!Build()) return false;
+            if (!Build(_moveSound)) return false;
             _movingObject = false;
             _lastDemolish = null;
             DeselectBuildObject();
             return true;
         }
 
-        bool Build()
+        bool Build(AudioClip soundEffect)
         {
             if (_selectedGridObjectSO == null) return false;
             if (!CheckSurroundingSpace())
@@ -544,7 +539,7 @@ namespace Nevelson.GridPlacementSystem
 
             //Play build sound
             BuildingSound.transform.position = GetMouseWorldPosition();
-            BuildingSound.PlayOneShot(_buildSound);
+            BuildingSound.PlayOneShot(soundEffect);
 
             _placedGridObjects.Add(new PlacedGridObject(
                 placedObject.GetInstanceID().ToString(),
@@ -633,11 +628,12 @@ namespace Nevelson.GridPlacementSystem
 
         void Rotate()
         {
-            if (_selectedGridObjectSO != null && !_selectedGridObjectSO.canRotate)
+            if (_selectedGridObjectSO != null && !_selectedGridObjectSO.IsRotatable)
             {
                 Debug.Log("This grid object SO is marked as not able to rotate");
                 return;
             }
+            Debug.Log("This happened");
             _dir = GridPlacementObjectSO.GetNextDir(_dir);
         }
 
@@ -653,11 +649,44 @@ namespace Nevelson.GridPlacementSystem
             RefreshSelectedObjectType();
         }
 
-        void ResetRotation()
+        bool CheckIfMaxOfObjectPlaced(int selectedIndex)
         {
+            if (selectedIndex < 0 || selectedIndex >= _gridObjects.Count)
+            {
+                Debug.LogError("Selected building index out of range");
+                return false;
+            }
+
+            //if the max placed is 0, the limit is infinite
+            GridPlacementObjectSO gridSO = _gridObjects[selectedIndex];
+            if (gridSO.maxPlaced == 0) return true;
+
+            int placedObjCount = _placedGridObjects.Where(x => x.GridObjectSO == gridSO).Count();
+            if (placedObjCount >= gridSO.maxPlaced)
+            {
+                Debug.Log($"Cannot place more {gridSO.name}. Max count {gridSO.maxPlaced}. Number placed {placedObjCount}");
+                return false;
+            }
+            return true;
+        }
+
+        bool VerifyBuildAction()
+        {
+            if (!_isGridDisplayed)
+            {
+                Debug.LogWarning($"Not performing action because grid is not displayed");
+                return false;
+            }
+            return true;
+        }
+
+        void PerformRotationReset()
+        {
+            if (_selectedGridObjectSO != null) return;
+
+            Debug.Log("Resetting rotation");
             while (_dir != GridPlacementObjectSO.Dir.Down)
             {
-                Debug.Log("Resetting rotate position");
                 Rotate();
             }
         }
@@ -672,6 +701,37 @@ namespace Nevelson.GridPlacementSystem
         void RefreshSelectedObjectType()
         {
             OnSelectedChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        //functions for ghost. Not crazy about this but whatever. too coupled
+        bool CheckSurroundingSpace()
+        {
+            _grid.GetXY(GetMouseWorldPosition(), out int x, out int y);
+            Vector2Int placedObjectOrigin = new Vector2Int(x, y);
+            List<Vector2Int> gridPositionList = _selectedGridObjectSO.GetGridPositionList(placedObjectOrigin, _dir);
+            foreach (Vector2Int gridPosition in gridPositionList)
+            {
+                //if the surrounding tile is outside grid bounds or can't build
+                GridObject gridObj = _grid.GetGridObject(gridPosition.x, gridPosition.y);
+                if (gridObj == null || !gridObj.CanBuild()) return false;
+            }
+            return true;
+        }
+        Vector3 GetMouseWorldSnappedPosition()
+        {
+            Vector3 mousePosition = GetMouseWorldPosition();
+            if (_selectedGridObjectSO == null) return mousePosition;
+
+            _grid.GetXY(mousePosition, out int x, out int y);
+            Vector2Int rotationOffset = _selectedGridObjectSO.GetRotationOffset(_dir);
+            Vector3 placedObjectWorldPosition = _grid.GetWorldPosition(x, y) + new Vector3(rotationOffset.x, rotationOffset.y) * _grid.CellSize;
+            return placedObjectWorldPosition;
+        }
+        Quaternion GetPlacedObjectRotation()
+        {
+            return _selectedGridObjectSO == null ?
+                Quaternion.identity :
+                Quaternion.Euler(0, 0, -_selectedGridObjectSO.GetRotationAngle(_dir));
         }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Nevelson.GridPlacementSystem
@@ -7,23 +8,30 @@ namespace Nevelson.GridPlacementSystem
         [SerializeField] Material canPlace;
         [SerializeField] Material cannotPlace;
         Transform visual = null;
-        GridBuildingSystem gbs;
         Vector3 lastTargetPosition;
 
-        public void Init(GridBuildingSystem gbs)
-        {
-            this.gbs = gbs;
-        }
+        Func<Vector3> _mouseWorldSnappedPosition;
+        Func<Quaternion> _placedObjectRotation;
+        Func<bool> _checkSurroundingSpace;
+        Func<GridPlacementObjectSO> _selectedGridObject;
 
-        void Start()
+        public void Init(Func<Vector3> mouseWorldSnappedPosition,
+                    Func<Quaternion> placedObjectRotation,
+                    Func<bool> checkSurroundingSpace,
+                    Func<GridPlacementObjectSO> selectedGridObject,
+                    GridBuildingSystem gbs)
         {
+            this._mouseWorldSnappedPosition = mouseWorldSnappedPosition;
+            this._placedObjectRotation = placedObjectRotation;
+            this._checkSurroundingSpace = checkSurroundingSpace;
+            this._selectedGridObject = selectedGridObject;
             RefreshVisual();
             gbs.OnSelectedChanged += Instance_OnSelectedChanged;
         }
 
         void LateUpdate()
         {
-            Vector3 targetPosition = gbs.GetMouseWorldSnappedPosition();
+            Vector3 targetPosition = _mouseWorldSnappedPosition();
             if (lastTargetPosition == null || targetPosition != lastTargetPosition)
             {
                 SetGhostColor();
@@ -36,25 +44,26 @@ namespace Nevelson.GridPlacementSystem
         void Animate(Vector3 targetPosition)
         {
             transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * 15f);
-            transform.rotation = Quaternion.Lerp(transform.rotation, gbs.GetPlacedObjectRotation(), Time.deltaTime * 15f);
+            transform.rotation = Quaternion.Lerp(transform.rotation, _placedObjectRotation(), Time.deltaTime * 15f);
         }
 
         void SetGhostColor()
         {
             if (visual == null) return;
             var sr = visual.GetComponentInChildren<SpriteRenderer>();
-            sr.material = gbs.CheckSurroundingSpace() ?
+            sr.material = _checkSurroundingSpace() ?
                 canPlace : cannotPlace;
         }
 
-        void Instance_OnSelectedChanged(object sender, System.EventArgs e)
+        void Instance_OnSelectedChanged(object sender, EventArgs e)
         {
+            Debug.Log("THIS HAPPENED");
             RefreshVisual();
         }
 
         void RefreshVisual()
         {
-            GridPlacementObjectSO placedObjectTypeSO = gbs.SelectedGridObject;
+            GridPlacementObjectSO placedObjectTypeSO = _selectedGridObject();
             if (placedObjectTypeSO == null)
             {
                 if (visual != null)

@@ -14,7 +14,11 @@ namespace Nevelson.GridPlacementSystem
         //note: Display and hide functions are responsible for activating and deactivating the tiles
         //this class just sets it's color to it's original color or transparent
 
-        public GridObject(Grid<GridObject> grid, int x, int y, GameObject worldTile)
+        public GridObject(
+            Grid<GridObject> grid,
+            int x, int y,
+            GameObject worldTile,
+            Color filledColor)
         {
             this.grid = grid;
             this.x = x;
@@ -22,8 +26,8 @@ namespace Nevelson.GridPlacementSystem
             this.worldTile = worldTile.GetComponentInChildren<SpriteRenderer>();
             placedObject = null;
             vacantColor = this.worldTile.color;
-            filledColor = Color.blue;
-            filledColor.a = vacantColor.a;
+            this.filledColor = filledColor;
+            this.filledColor.a = vacantColor.a;
         }
 
         public override string ToString()

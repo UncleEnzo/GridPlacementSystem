@@ -26,5 +26,14 @@ namespace Nevelson.GridPlacementSystem
             this.IsDestructable = IsDestructable;
             this.PlacedObjectID = PlacedObjectID;
         }
+
+        public override string ToString()
+        {
+            return $"Object: {GridObjectSO.name} \n" +
+                $"IsMovable: {IsMovable}\n" +
+                $"IsDestructable: {IsDestructable}\n" +
+                $"IsRotatable: {GridObjectSO.IsRotatable}\n" +
+                $"MaxPlacable: {GridObjectSO.maxPlaced}";
+        }
     }
 }

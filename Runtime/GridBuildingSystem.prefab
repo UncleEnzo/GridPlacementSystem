@@ -47,16 +47,17 @@ MonoBehaviour:
   _preInitGridObjects: []
   _gridObjects:
   - {fileID: 11400000, guid: e160f5a5bee9875469c5921651bfd5af, type: 2}
-  buildMode: 0
+  _filledTileColor: {r: 0.97285515, g: 1, b: 0.051886797, a: 1}
   _displayGridOnStart: 1
   _gridWidth: 40
   _gridHeight: 25
   _cellSize: 1
-  _isDebug: 1
+  _isDebug: 0
   _buildingSoundPrefab: {fileID: 4305903890773607726, guid: 2793789cc8952e045b734f22ad8e3770, type: 3}
   _worldGridSprite: {fileID: 4173932048244737505, guid: 16ff6129e77d86547b1090346a001795, type: 3}
   _buildingGhostPrefab: {fileID: 155848982808662930, guid: 98250ed60f2ab4648ae5cb6ba6ac21e5, type: 3}
   _buildSound: {fileID: 8300000, guid: 915a17391fa0fa34ea191b9f8b808d4e, type: 3}
+  _moveSound: {fileID: 0}
   _demolishSound: {fileID: 8300000, guid: 915a17391fa0fa34ea191b9f8b808d4e, type: 3}
   _OnGridUpdate:
     m_PersistentCalls:
