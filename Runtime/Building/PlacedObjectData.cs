@@ -9,6 +9,8 @@ namespace Nevelson.GridPlacementSystem
         public GridPlacementObjectSO.Dir Dir;
         public bool IsMovable;
         public bool IsDestructable;
+        public bool UseConstructionState;
+        public ConstructionState ConstructionState;
         public string PlacedObjectID;
 
         public PlacedObjectData(
@@ -17,6 +19,8 @@ namespace Nevelson.GridPlacementSystem
             GridPlacementObjectSO.Dir Dir,
             bool IsMovable,
             bool IsDestructable,
+            bool UseConstructionState,
+            ConstructionState ConstructionState,
             string PlacedObjectID)
         {
             this.Dir = Dir;
@@ -24,6 +28,8 @@ namespace Nevelson.GridPlacementSystem
             this.Origin = Origin;
             this.IsMovable = IsMovable;
             this.IsDestructable = IsDestructable;
+            this.UseConstructionState = UseConstructionState;
+            this.ConstructionState = ConstructionState;
             this.PlacedObjectID = PlacedObjectID;
         }
 
@@ -33,7 +39,9 @@ namespace Nevelson.GridPlacementSystem
                 $"IsMovable: {IsMovable}\n" +
                 $"IsDestructable: {IsDestructable}\n" +
                 $"IsRotatable: {GridObjectSO.IsRotatable}\n" +
-                $"MaxPlacable: {GridObjectSO.maxPlaced}";
+                $"MaxPlacable: {GridObjectSO.maxPlaced}\n" +
+                $"UseConstructionState: {UseConstructionState}\n" +
+                $"ConstructionState: {ConstructionState}";
         }
     }
 }

@@ -123,8 +123,20 @@ namespace Nevelson.GridPlacementSystem
         {
             _isGridDisplayed = isGridDisplayed;
             _buildingGhost.SetActive(_isGridDisplayed);
+
             foreach (Transform child in transform)
             {
+                GridObject gridObj = _grid.GetGridObject(child.position);
+                if (gridObj == null || gridObj.PlacedObject == null)
+                {
+                    child.gameObject.SetActive(_isGridDisplayed);
+                    continue;
+                }
+                if (gridObj.PlacedObject.ConstructionState == ConstructionState.CONSTRUCTION)
+                {
+                    child.gameObject.SetActive(true);
+                    continue;
+                }
                 child.gameObject.SetActive(_isGridDisplayed);
             }
             SetBuildMode(BuildMode.BUILD);
@@ -359,7 +371,12 @@ namespace Nevelson.GridPlacementSystem
 
         void PreInstantiateGridObjects(List<PreInitObject> preInitObject)
         {
-            bool PreInitBuild(Vector2Int tilePos, GridPlacementObjectSO buildObject, GridPlacementObjectSO.Dir dir, out PlacedGridObject preInitedPlacedObject)
+            bool PreInitBuild(
+                Vector2Int tilePos,
+                GridPlacementObjectSO buildObject,
+                GridPlacementObjectSO.Dir dir,
+                ConstructionState constructionState,
+                out PlacedGridObject preInitedPlacedObject)
             {
                 preInitedPlacedObject = null;
                 Vector2Int tilePosWithTransOffset = tilePos + Vector2Int.FloorToInt(transform.position);
@@ -396,7 +413,8 @@ namespace Nevelson.GridPlacementSystem
                     placedObjectWorldPosition,
                     placedObjectOrigin,
                     dir,
-                    buildObject);
+                    buildObject,
+                    constructionState);
 
                 //this rotates the sprite a bit more for 2D
                 placedObject.transform.rotation = Quaternion.Euler(0, 0, -buildObject.GetRotationAngle(dir));
@@ -420,7 +438,7 @@ namespace Nevelson.GridPlacementSystem
 
             foreach (var obj in preInitObject)
             {
-                if (PreInitBuild(obj.TilePosition, obj.GridObject, obj.Dir, out PlacedGridObject preInitedPlacedObject))
+                if (PreInitBuild(obj.TilePosition, obj.GridObject, obj.Dir, obj.ConstructionState, out PlacedGridObject preInitedPlacedObject))
                 {
                     _placedGridObjects.Add(preInitedPlacedObject);
                 }
@@ -548,7 +566,8 @@ namespace Nevelson.GridPlacementSystem
                 placedObjectWorldPosition,
                 placedObjectOrigin,
                 _dir,
-                _selectedGridObjectSO);
+                _selectedGridObjectSO,
+                ConstructionState.CONSTRUCTION);
 
             //this rotates the sprite a bit more for 2D
             placedObject.transform.rotation = Quaternion.Euler(0, 0, -_selectedGridObjectSO.GetRotationAngle(_dir));
@@ -617,8 +636,9 @@ namespace Nevelson.GridPlacementSystem
             }
             Debug.Log("Undoing last demolish");
             Vector2Int placedObjectOrigin = _lastDemolish.Origin;
-            var selectedGridObjectSO = _lastDemolish.GridObjectSO;
-            var dir = _lastDemolish.Dir;
+            GridPlacementObjectSO selectedGridObjectSO = _lastDemolish.GridObjectSO;
+            GridPlacementObjectSO.Dir dir = _lastDemolish.Dir;
+            ConstructionState constructionState = _lastDemolish.ConstructionState;
 
 
             Vector2Int rotationOffset = selectedGridObjectSO.GetRotationOffset(dir);
@@ -630,7 +650,8 @@ namespace Nevelson.GridPlacementSystem
                 placedObjectWorldPosition,
                 placedObjectOrigin,
                 dir,
-                selectedGridObjectSO);
+                selectedGridObjectSO,
+                constructionState);
 
             //this rotates the sprite a bit more for 2D
             placedObject.transform.rotation = Quaternion.Euler(0, 0, -selectedGridObjectSO.GetRotationAngle(dir));

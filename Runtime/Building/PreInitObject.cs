@@ -11,13 +11,19 @@ namespace Nevelson.GridPlacementSystem
         public Vector2Int TilePosition { get => new Vector2Int(x, y); }
         public GridPlacementObjectSO GridObject;
         public GridPlacementObjectSO.Dir Dir = GridPlacementObjectSO.Dir.Down;
+        public ConstructionState ConstructionState;
 
-        public PreInitObject(Vector2Int tilePosition, GridPlacementObjectSO gridObject, GridPlacementObjectSO.Dir dir)
+        public PreInitObject(
+            Vector2Int tilePosition,
+            GridPlacementObjectSO gridObject,
+            GridPlacementObjectSO.Dir dir,
+            ConstructionState constructionState)
         {
             x = tilePosition.x;
             y = tilePosition.y;
             GridObject = gridObject;
             Dir = dir;
+            ConstructionState = constructionState;
         }
     }
 }

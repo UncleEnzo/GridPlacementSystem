@@ -14,6 +14,8 @@ namespace Nevelson.GridPlacementSystem
         Color cannotBuild;
         Color movableOrDestroyable;
 
+        public PlacedObject PlacedObject { get { return placedObject; } }
+
         //note: Display and hide functions are responsible for activating and deactivating the tiles
         //this class just sets it's color to it's original color or transparent
 
@@ -72,8 +74,6 @@ namespace Nevelson.GridPlacementSystem
         {
             return x + ", " + y + "\n" + placedObject;
         }
-
-        public PlacedObject PlacedObject { get { return placedObject; } }
 
         public void SetPlacedObject(PlacedObject placedObject)
         {
