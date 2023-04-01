@@ -14,17 +14,30 @@ namespace Nevelson.GridPlacementSystem
         Func<Quaternion> _placedObjectRotation;
         Func<bool> _checkSurroundingSpace;
         Func<GridPlacementObjectSO> _selectedGridObject;
+        Action _undoPreviousTileColors;
+        Action _updateTileColors;
+        Action _undoMoveDemolishTileColors;
+        Action _updateMoveDemolishTileColors;
+
 
         public void Init(Func<Vector3> mouseWorldSnappedPosition,
                     Func<Quaternion> placedObjectRotation,
                     Func<bool> checkSurroundingSpace,
                     Func<GridPlacementObjectSO> selectedGridObject,
+                    Action undoPreviousTileColors,
+                    Action updateTileColors,
+                    Action undoMoveDemolishTileColors,
+                    Action updateMoveDemolishTileColors,
                     GridBuildingSystem gbs)
         {
             this._mouseWorldSnappedPosition = mouseWorldSnappedPosition;
             this._placedObjectRotation = placedObjectRotation;
             this._checkSurroundingSpace = checkSurroundingSpace;
             this._selectedGridObject = selectedGridObject;
+            this._undoPreviousTileColors = undoPreviousTileColors;
+            this._updateTileColors = updateTileColors;
+            this._undoMoveDemolishTileColors = undoMoveDemolishTileColors;
+            this._updateMoveDemolishTileColors = updateMoveDemolishTileColors;
             RefreshVisual();
             gbs.OnSelectedChanged += Instance_OnSelectedChanged;
         }
@@ -35,16 +48,20 @@ namespace Nevelson.GridPlacementSystem
             if (lastTargetPosition == null || targetPosition != lastTargetPosition)
             {
                 SetGhostColor();
+                if (_selectedGridObject())
+                {
+                    _undoPreviousTileColors();
+                    _updateTileColors();
+                }
+                else
+                {
+                    _undoMoveDemolishTileColors();
+                    _updateMoveDemolishTileColors();
+                }
                 lastTargetPosition = targetPosition;
             }
 
             Animate(targetPosition);
-        }
-
-        void Animate(Vector3 targetPosition)
-        {
-            transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * 15f);
-            transform.rotation = Quaternion.Lerp(transform.rotation, _placedObjectRotation(), Time.deltaTime * 15f);
         }
 
         void SetGhostColor()
@@ -53,6 +70,12 @@ namespace Nevelson.GridPlacementSystem
             var sr = visual.GetComponentInChildren<SpriteRenderer>();
             sr.material = _checkSurroundingSpace() ?
                 canPlace : cannotPlace;
+        }
+
+        void Animate(Vector3 targetPosition)
+        {
+            transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * 15f);
+            transform.rotation = Quaternion.Lerp(transform.rotation, _placedObjectRotation(), Time.deltaTime * 15f);
         }
 
         void Instance_OnSelectedChanged(object sender, EventArgs e)

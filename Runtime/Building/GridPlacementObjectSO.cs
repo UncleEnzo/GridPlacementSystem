@@ -64,32 +64,46 @@ namespace Nevelson.GridPlacementSystem
 
         public List<Vector2Int> GetGridPositionList(Vector2Int offset, Dir dir)
         {
-            List<Vector2Int> gridPositionList = new List<Vector2Int>();
+            List<Vector2Int> VerticalGridPositionList(Vector2Int offset)
+            {
+                List<Vector2Int> gridPositionList = new List<Vector2Int>();
+                for (int x = 0; x < width; x++)
+                {
+                    for (int y = 0; y < height; y++)
+                    {
+                        gridPositionList.Add(offset + new Vector2Int(x, y));
+                    }
+                }
+                return gridPositionList;
+            }
+
+            List<Vector2Int> HorizontalGridPositionList(Vector2Int offset)
+            {
+                List<Vector2Int> gridPositionList = new List<Vector2Int>();
+                for (int x = 0; x < height; x++)
+                {
+                    for (int y = 0; y < width; y++)
+                    {
+                        gridPositionList.Add(offset + new Vector2Int(x, y));
+                    }
+                }
+                return gridPositionList;
+            }
+
             switch (dir)
             {
-                default:
                 case Dir.Down:
+                    return VerticalGridPositionList(offset);
                 case Dir.Up:
-                    for (int x = 0; x < width; x++)
-                    {
-                        for (int y = 0; y < height; y++)
-                        {
-                            gridPositionList.Add(offset + new Vector2Int(x, y));
-                        }
-                    }
-                    break;
+                    return VerticalGridPositionList(offset);
                 case Dir.Left:
+                    return HorizontalGridPositionList(offset);
                 case Dir.Right:
-                    for (int x = 0; x < height; x++)
-                    {
-                        for (int y = 0; y < width; y++)
-                        {
-                            gridPositionList.Add(offset + new Vector2Int(x, y));
-                        }
-                    }
-                    break;
+                    return HorizontalGridPositionList(offset);
+                default:
+                    Debug.LogError($"Direction does not exist: {dir}");
+                    return new List<Vector2Int>();
             }
-            return gridPositionList;
         }
     }
 }

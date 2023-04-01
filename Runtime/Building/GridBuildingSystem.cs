@@ -15,7 +15,10 @@ namespace Nevelson.GridPlacementSystem
 
         [Header("Place objects here you want player to be able to instantiate on build")]
         [SerializeField] List<GridPlacementObjectSO> _gridObjects;
-        [SerializeField] Color _filledTileColor;
+        [SerializeField] Color _canBuildTileColor;
+        [SerializeField] Color _cannotBuildTileColor;
+        [SerializeField] Color _occupiedTileColor;
+        [SerializeField] Color _moveOrDestroyColor;
         [SerializeField] bool _displayGridOnStart = false;
         [SerializeField] int _gridWidth = 15;
         [SerializeField] int _gridHeight = 10;
@@ -34,8 +37,9 @@ namespace Nevelson.GridPlacementSystem
 
         BuildMode buildMode = BuildMode.BUILD;
         List<PlacedGridObject> _placedGridObjects = new List<PlacedGridObject>();
-
         Grid<GridObject> _grid;
+        List<GridObject> previousTiles = new List<GridObject>();
+        List<GridObject> previousMoveDemolishTiles = new List<GridObject>();
         GameObject _buildingGhost;
         GameObject _buildingSoundGO;
         GridPlacementObjectSO _selectedGridObjectSO;
@@ -139,6 +143,8 @@ namespace Nevelson.GridPlacementSystem
                 return false;
             }
             this.buildMode = buildMode;
+            UndoMoveDemolishTilesColors();
+            UndoSelectedTilesColors();
             switch (buildMode)
             {
                 case BuildMode.BUILD:
@@ -330,7 +336,14 @@ namespace Nevelson.GridPlacementSystem
                     GameObject tile = Instantiate(_worldGridSprite, transform);
                     tile.transform.localPosition = new Vector3(x, y) * _cellSize;
                     Vector3Int gridTransform = Vector3Int.RoundToInt(tile.transform.localPosition);
-                    return new GridObject(g, gridTransform.x, gridTransform.y, tile, _filledTileColor);
+                    return new GridObject(g,
+                        gridTransform.x,
+                        gridTransform.y,
+                        tile,
+                        _occupiedTileColor,
+                        _canBuildTileColor,
+                        _cannotBuildTileColor,
+                        _moveOrDestroyColor);
                 },
                 transform,
                 _isDebug);
@@ -338,8 +351,6 @@ namespace Nevelson.GridPlacementSystem
             PreInstantiateGridObjects(_preInitGridObjects);
             DisplayGrid(_displayGridOnStart);
         }
-
-        //END TODO STUFF
 
         void OnApplicationQuit()
         {
@@ -425,6 +436,10 @@ namespace Nevelson.GridPlacementSystem
                 GetPlacedObjectRotation,
                 CheckSurroundingSpace,
                 SelectedGridObject,
+                UndoSelectedTilesColors,
+                UpdateSurroundingTileColors,
+                UndoMoveDemolishTilesColors,
+                UpdateDestroyOrMovableTileColors,
                 this);
         }
 
@@ -520,6 +535,9 @@ namespace Nevelson.GridPlacementSystem
                 return false;
             }
 
+            UndoMoveDemolishTilesColors();
+            UndoSelectedTilesColors();
+
             _grid.GetXY(GetMouseWorldPosition(), out int x, out int y);
             Vector2Int placedObjectOrigin = new Vector2Int(x, y);
             Vector2Int rotationOffset = _selectedGridObjectSO.GetRotationOffset(_dir);
@@ -565,6 +583,9 @@ namespace Nevelson.GridPlacementSystem
                 Debug.Log("Object is not marked as destructible, not destroying");
                 return false;
             }
+
+            UndoMoveDemolishTilesColors();
+            UndoSelectedTilesColors();
 
             _lastDemolish = gridObject.PlacedObject.GetData();
             placedObject.DestroySelf();
@@ -638,7 +659,6 @@ namespace Nevelson.GridPlacementSystem
                 Debug.Log("This grid object SO is marked as not able to rotate");
                 return;
             }
-            Debug.Log("This happened");
             _dir = GridPlacementObjectSO.GetNextDir(_dir);
         }
 
@@ -708,6 +728,105 @@ namespace Nevelson.GridPlacementSystem
             OnSelectedChanged?.Invoke(this, EventArgs.Empty);
         }
 
+        void UndoSelectedTilesColors()
+        {
+            //unset all of the previous colors
+            foreach (var gridObj in previousTiles)
+            {
+                if (gridObj == null) continue;
+                if (!gridObj.CanBuild()) continue;
+                gridObj.SetVacantColor();
+            }
+            previousTiles.Clear();
+        }
+
+        void UndoMoveDemolishTilesColors()
+        {
+            //unset all of the previous colors
+            foreach (var gridObj in previousMoveDemolishTiles)
+            {
+                if (gridObj == null) continue;
+                //if (!gridObj.CanBuild()) continue;
+                gridObj.SetOccupiedColor();
+            }
+            previousMoveDemolishTiles.Clear();
+        }
+
+        void UpdateDestroyOrMovableTileColors()
+        {
+            UndoMoveDemolishTilesColors();
+
+            GridObject gridObject = _grid.GetGridObject(GetMouseWorldPosition());
+            if (gridObject == null) return;
+            PlacedObject placedObject = gridObject.PlacedObject;
+            if (placedObject == null) return;
+
+            if (buildMode == BuildMode.MOVE && !placedObject.IsMovable)
+            {
+                List<Vector2Int> gridPosList = placedObject.GetGridPositionList();
+                foreach (Vector2Int gridPosition in gridPosList)
+                {
+                    GridObject gridObj = _grid.GetGridObject(gridPosition.x, gridPosition.y);
+                    gridObj.SetCannotBuildColor();
+                    previousMoveDemolishTiles.Add(gridObj);
+                }
+                return;
+            }
+
+            if (buildMode == BuildMode.DEMOLISH && !placedObject.IsDestructable)
+            {
+                List<Vector2Int> gridPosList = placedObject.GetGridPositionList();
+                foreach (Vector2Int gridPosition in gridPosList)
+                {
+                    GridObject gridObj = _grid.GetGridObject(gridPosition.x, gridPosition.y);
+                    gridObj.SetCannotBuildColor();
+                    previousMoveDemolishTiles.Add(gridObj);
+                }
+                return;
+            }
+
+            List<Vector2Int> gridPositionList = placedObject.GetGridPositionList();
+            foreach (Vector2Int gridPosition in gridPositionList)
+            {
+                GridObject gridObj = _grid.GetGridObject(gridPosition.x, gridPosition.y);
+                gridObj.SetCanMoveOrDestroyColor();
+                previousMoveDemolishTiles.Add(gridObj);
+            }
+        }
+
+        void UpdateSurroundingTileColors()
+        {
+            //set colors
+            _grid.GetXY(GetMouseWorldPosition(), out int x, out int y);
+            Vector2Int origin = new Vector2Int(x, y);
+            List<Vector2Int> gridPositionList = _selectedGridObjectSO.GetGridPositionList(origin, _dir);
+            List<GridObject> newTiles = new List<GridObject>();
+            if (CheckSurroundingSpace())
+            {
+                foreach (Vector2Int gridPosition in gridPositionList)
+                {
+                    GridObject gridObj = _grid.GetGridObject(gridPosition.x, gridPosition.y);
+                    if (gridObj == null) continue;
+                    if (!gridObj.CanBuild()) continue;
+                    gridObj.SetCanBuildColor();
+                    newTiles.Add(gridObj);
+                }
+            }
+            else
+            {
+                foreach (Vector2Int gridPosition in gridPositionList)
+                {
+                    GridObject gridObj = _grid.GetGridObject(gridPosition.x, gridPosition.y);
+                    if (gridObj == null) continue;
+                    if (!gridObj.CanBuild()) continue;
+                    gridObj.SetCannotBuildColor();
+                    newTiles.Add(gridObj);
+                }
+            }
+
+            previousTiles = newTiles;
+        }
+
         //functions for ghost. Not crazy about this but whatever. too coupled
         bool CheckSurroundingSpace()
         {
@@ -722,6 +841,7 @@ namespace Nevelson.GridPlacementSystem
             }
             return true;
         }
+
         Vector3 GetMouseWorldSnappedPosition()
         {
             Vector3 mousePosition = GetMouseWorldPosition();

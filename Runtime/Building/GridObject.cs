@@ -8,8 +8,11 @@ namespace Nevelson.GridPlacementSystem
         Grid<GridObject> grid;
         PlacedObject placedObject;
         SpriteRenderer worldTile;
-        Color vacantColor;
-        Color filledColor;
+        Color vacant;
+        Color occupied;
+        Color canBuild;
+        Color cannotBuild;
+        Color movableOrDestroyable;
 
         //note: Display and hide functions are responsible for activating and deactivating the tiles
         //this class just sets it's color to it's original color or transparent
@@ -18,16 +21,51 @@ namespace Nevelson.GridPlacementSystem
             Grid<GridObject> grid,
             int x, int y,
             GameObject worldTile,
-            Color filledColor)
+            Color occupied,
+            Color canBuild,
+            Color cannotBuild,
+            Color movableOrDestroyable)
         {
             this.grid = grid;
             this.x = x;
             this.y = y;
             this.worldTile = worldTile.GetComponentInChildren<SpriteRenderer>();
             placedObject = null;
-            vacantColor = this.worldTile.color;
-            this.filledColor = filledColor;
-            this.filledColor.a = vacantColor.a;
+            vacant = this.worldTile.color;
+            this.occupied = occupied;
+            this.canBuild = canBuild;
+            this.cannotBuild = cannotBuild;
+            this.movableOrDestroyable = movableOrDestroyable;
+            this.occupied.a =
+                this.canBuild.a =
+                this.cannotBuild.a =
+                this.movableOrDestroyable.a
+                = vacant.a;
+        }
+
+        public void SetVacantColor()
+        {
+            worldTile.color = vacant;
+        }
+
+        public void SetOccupiedColor()
+        {
+            worldTile.color = occupied;
+        }
+
+        public void SetCanBuildColor()
+        {
+            worldTile.color = canBuild;
+        }
+
+        public void SetCannotBuildColor()
+        {
+            worldTile.color = cannotBuild;
+        }
+
+        public void SetCanMoveOrDestroyColor()
+        {
+            worldTile.color = movableOrDestroyable;
         }
 
         public override string ToString()
@@ -41,14 +79,14 @@ namespace Nevelson.GridPlacementSystem
         {
             this.placedObject = placedObject;
             grid.TriggerGridObjectChanged(x, y);
-            worldTile.color = filledColor;
+            worldTile.color = occupied;
         }
 
         public void ClearPlacedObject()
         {
             placedObject = null;
             grid.TriggerGridObjectChanged(x, y);
-            worldTile.color = vacantColor;
+            worldTile.color = vacant;
         }
 
         public bool CanBuild()

@@ -36,6 +36,11 @@ namespace Nevelson.GridPlacementSystem
 
         void Update()
         {
+            if (Input.GetKeyUp(KeyCode.Escape))
+            {
+
+            }
+
             if (Input.GetKeyDown(KeyCode.Z))
             {
                 var placedObj = GBS.GetPlaceObjInfoAtMousePos();
