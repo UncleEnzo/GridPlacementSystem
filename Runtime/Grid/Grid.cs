@@ -26,7 +26,7 @@ namespace Nevelson.GridPlacementSystem
         public float CellSize { get { return _cellSize; } }
 
         public Grid(int width, int height, float cellSize,
-            IgnoreRanges[] ignoredTilesRanges,
+            Vector2IntRanges[] ignoredTilesRanges,
             Func<Grid<TGridObject>, int, int, TGridObject> createGridObject,
             Transform transform, bool debug = false)
         {
@@ -135,42 +135,13 @@ namespace Nevelson.GridPlacementSystem
             return new Vector3(x, y) * _cellSize + _transform.position;
         }
 
-        bool IsIgnoredTile(int x, int y, IgnoreRanges[] ignoredTilesRanges)
+        bool IsIgnoredTile(int x, int y, Vector2IntRanges[] ignoredTilesRanges)
         {
-            //I think the problem is that it's presuming END is larger than 
-            return Array.Exists(ignoredTilesRanges, range =>
+            foreach (var vectorRange in ignoredTilesRanges)
             {
-                if (range.start.x < range.end.x)
-                {
-                    if (x < range.start.x || x > range.end.x)
-                    {
-                        return false;
-                    }
-                }
-                else
-                {
-                    if (x > range.start.x || x < range.end.x)
-                    {
-                        return false;
-                    }
-                }
-
-                if (range.start.y < range.end.y)
-                {
-                    if (y < range.start.y || y > range.end.y)
-                    {
-                        return false;
-                    }
-                }
-                else
-                {
-                    if (y > range.start.y || y < range.end.y)
-                    {
-                        return false;
-                    }
-                }
-                return true;
-            });
+                if (vectorRange.IsBetweenRange(x, y)) return true;
+            }
+            return false;
         }
     }
 }

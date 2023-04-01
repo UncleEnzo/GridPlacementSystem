@@ -57,7 +57,7 @@ MonoBehaviour:
   _worldGridSprite: {fileID: 4173932048244737505, guid: 16ff6129e77d86547b1090346a001795, type: 3}
   _buildingGhostPrefab: {fileID: 155848982808662930, guid: 98250ed60f2ab4648ae5cb6ba6ac21e5, type: 3}
   _buildSound: {fileID: 8300000, guid: 915a17391fa0fa34ea191b9f8b808d4e, type: 3}
-  _moveSound: {fileID: 0}
+  _moveSound: {fileID: 8300000, guid: 915a17391fa0fa34ea191b9f8b808d4e, type: 3}
   _demolishSound: {fileID: 8300000, guid: 915a17391fa0fa34ea191b9f8b808d4e, type: 3}
   _OnGridUpdate:
     m_PersistentCalls:
