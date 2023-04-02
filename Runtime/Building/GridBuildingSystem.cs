@@ -182,13 +182,9 @@ namespace Nevelson.GridPlacementSystem
                 Debug.Log($"Did not demolish object at position");
                 return false;
             }
-            //_OnGridUpdate?.Invoke(_placedGridObjects); //Need to call here so build isn't prevented by max count
 
             _lastDemolishPlaceData.ConstructionState = constructionState;
             UndoLastDemolish();
-
-
-            Debug.Log($"Setting new construction state to: {constructionState}");
             _OnGridUpdate?.Invoke(_placedGridObjects);
 
             //Calling this again to HIDE tiles
