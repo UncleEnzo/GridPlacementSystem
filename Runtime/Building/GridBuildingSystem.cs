@@ -117,7 +117,6 @@ namespace Nevelson.GridPlacementSystem
         {
             _grid.GetXY(GetMouseWorldPosition(), out int x, out int y);
             GridObject gridObject = _grid.GetGridObject(x, y);
-
             if (gridObject == null) return null;
             if (gridObject.PlacedObject == null) return null;
             return gridObject.PlacedObject;
@@ -424,10 +423,16 @@ namespace Nevelson.GridPlacementSystem
 
                 _grid.GetXY((Vector2)tilePosWithTransOffset, out int x, out int y);
                 Vector2Int placedObjectOrigin = new Vector2Int(x, y);
-                GridObject gridObject = _grid.GetGridObject(x, y);
                 Vector2Int rotationOffset = buildObject.GetRotationOffset(dir);
                 Vector3 placedObjectWorldPosition = _grid.GetWorldPosition(x, y) +
                     new Vector3(rotationOffset.x, rotationOffset.y) * _grid.CellSize;
+
+                GridObject gridObject = _grid.GetGridObject(x, y);
+                if (gridObject == null)
+                {
+                    Debug.LogError("Could not find gridobject");
+                    return false;
+                }
 
                 PlacedObject placedObject = PlacedObject.Create(
                     placedObjectWorldPosition,
@@ -489,7 +494,7 @@ namespace Nevelson.GridPlacementSystem
             if (_movingObject) return;
             _grid.GetXY(GetMouseWorldPosition(), out int x, out int y);
             GridObject gridObject = _grid.GetGridObject(x, y);
-            if (gridObject.PlacedObject == null)
+            if (gridObject == null || gridObject.PlacedObject == null)
             {
                 Debug.Log("Did not find object to move");
                 return;
@@ -584,11 +589,17 @@ namespace Nevelson.GridPlacementSystem
             UndoSelectedTilesColors();
 
             _grid.GetXY(GetMouseWorldPosition(), out int x, out int y);
-            GridObject gridObject = _grid.GetGridObject(x, y);
             Vector2Int placedObjectOrigin = new Vector2Int(x, y);
             Vector2Int rotationOffset = gridPlacementObject.GetRotationOffset(_dir);
             Vector3 placedObjectWorldPosition = _grid.GetWorldPosition(x, y) +
                 new Vector3(rotationOffset.x, rotationOffset.y) * _grid.CellSize;
+
+            GridObject gridObject = _grid.GetGridObject(x, y);
+            if (gridObject == null)
+            {
+                Debug.LogError("Could not find gridobject");
+                return false;
+            }
 
             PlacedObject placedObject = PlacedObject.Create(
                 placedObjectWorldPosition,
