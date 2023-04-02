@@ -7,6 +7,8 @@ namespace Nevelson.GridPlacementSystem
 
         public PlacedObjectData GetPlaceObjInfoAtMousePos();
 
+        public PlacedObject GetPlacedObjectAtMousePos();
+
         public bool SetBuildMode(BuildMode buildMode);
 
         public bool BuildSelectedObject();

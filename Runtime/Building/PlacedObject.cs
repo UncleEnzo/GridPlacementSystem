@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -13,7 +14,9 @@ namespace Nevelson.GridPlacementSystem
         GridPlacementObjectSO _gridObjectSO;
         Vector2Int _origin;
         GridPlacementObjectSO.Dir _dir;
+        GridObject _gridObject;
         ConstructionState _constructionState = ConstructionState.CONSTRUCTION;
+        Func<ConstructionState, GridObject, bool> _setConstructionState;
 
         public bool IsMovable { get => _isMovable; }
         public bool IsDestructable { get => _isDestructable; }
@@ -22,12 +25,34 @@ namespace Nevelson.GridPlacementSystem
             get => _useContructionState ? _constructionState : ConstructionState.NONE;
         }
 
+        public bool SetConstructionState(ConstructionState constructionState)
+        {
+            if (!_useContructionState)
+            {
+                Debug.LogWarning("Can't update construction state because this placed object does not use construction state");
+                return false;
+            }
+            if (constructionState == ConstructionState)
+            {
+                Debug.LogWarning("Not updating construction state because Set state is equal to current state");
+                return false;
+            }
+            if (constructionState == ConstructionState.NONE)
+            {
+                Debug.LogWarning("Not updating construction state because cannot set to NONE");
+                return false;
+            }
+            return _setConstructionState(constructionState, _gridObject);
+        }
+
         public static PlacedObject Create(
             Vector3 worldPosition,
             Vector2Int origin,
             GridPlacementObjectSO.Dir dir,
             GridPlacementObjectSO gridObjectSO,
-            ConstructionState constructionState)
+            GridObject gridObject,
+            ConstructionState constructionState,
+            Func<ConstructionState, GridObject, bool> setConstructionState)
         {
             Transform placedObjectTransform = Instantiate(
                 gridObjectSO.prefab,
@@ -35,7 +60,7 @@ namespace Nevelson.GridPlacementSystem
                 Quaternion.Euler(0, gridObjectSO.GetRotationAngle(dir), 0)
                 );
             PlacedObject placedObject = placedObjectTransform.GetComponent<PlacedObject>();
-            placedObject.Setup(gridObjectSO, origin, dir, constructionState);
+            placedObject.Setup(gridObjectSO, origin, dir, gridObject, constructionState, setConstructionState);
             return placedObject;
         }
         public PlacedObjectData GetData()
@@ -55,13 +80,24 @@ namespace Nevelson.GridPlacementSystem
             GridPlacementObjectSO placedObjectTypeSO,
             Vector2Int origin,
             GridPlacementObjectSO.Dir dir,
-            ConstructionState constructionState)
+            GridObject gridObject,
+            ConstructionState constructionState,
+            Func<ConstructionState, GridObject, bool> setConstructionState)
         {
+            _gridObject = gridObject;
             _gridObjectSO = placedObjectTypeSO;
             _origin = origin;
             _dir = dir;
             _constructionState = _useContructionState ? constructionState : ConstructionState.NONE;
-            GetComponentInChildren<SpriteRenderer>().enabled = constructionState == ConstructionState.NONE || constructionState == ConstructionState.BUILT;
+            _setConstructionState = setConstructionState;
+            //determine the placed object's transparency based on construction state (Should probably be a callback handled by outside items
+            if (constructionState == ConstructionState.CONSTRUCTION)
+            {
+                SpriteRenderer sp = GetComponentInChildren<SpriteRenderer>();
+                Color newColor = sp.color;
+                newColor.a = .6f;
+                sp.color = newColor;
+            }
         }
 
         public List<Vector2Int> GetGridPositionList()

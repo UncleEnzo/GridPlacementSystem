@@ -36,15 +36,44 @@ namespace Nevelson.GridPlacementSystem
 
         void Update()
         {
-            if (Input.GetKeyUp(KeyCode.Escape))
+            if (Input.GetKeyDown(KeyCode.Escape))
             {
+                var placedObj = GBS.GetPlacedObjectAtMousePos();
+                if (placedObj != null)
+                {
+                    if (placedObj.ConstructionState == ConstructionState.CONSTRUCTION)
+                    {
+                        Debug.Log("Setting Construction state to built");
+                        bool ok = placedObj.SetConstructionState(ConstructionState.BUILT);
+                        if (!ok)
+                        {
+                            Debug.LogError("FAILED");
+                        }
+                    }
+                    else
+                    {
+                        Debug.Log("Setting Construction state to CONSTRUCTION");
+                        bool ok = placedObj.SetConstructionState(ConstructionState.CONSTRUCTION);
+                        if (!ok)
+                        {
+                            Debug.LogError("FAILED");
+                        }
+                    }
 
+                }
+                else
+                {
+                    Debug.Log("Did NOT set construction state");
+                }
             }
 
             if (Input.GetKeyDown(KeyCode.Z))
             {
                 var placedObj = GBS.GetPlaceObjInfoAtMousePos();
-                if (placedObj != null) Debug.Log(placedObj.ToString());
+                if (placedObj != null)
+                {
+                    Debug.Log(placedObj.ToString());
+                }
             }
 
             if (Input.GetKeyDown(KeyCode.D))
@@ -114,6 +143,7 @@ namespace Nevelson.GridPlacementSystem
             //{
             //    GBS.ChangeSelectedBuildObject(1);
             //}
+
         }
     }
 }
