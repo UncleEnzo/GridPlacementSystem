@@ -452,7 +452,8 @@ namespace Nevelson.GridPlacementSystem
                     placedObject.GetInstanceID().ToString(),
                     buildObject,
                     tilePos,
-                    dir);
+                    dir,
+                    constructionState);
 
                 OnObjectPlaced?.Invoke(this, EventArgs.Empty);
                 return true;
@@ -616,7 +617,8 @@ namespace Nevelson.GridPlacementSystem
                 placedObject.GetInstanceID().ToString(),
                 gridPlacementObject,
                 placedObjectOrigin,
-                _dir));
+                _dir,
+                constructionState));
             OnObjectPlaced?.Invoke(this, EventArgs.Empty);
             return true;
         }
@@ -710,7 +712,7 @@ namespace Nevelson.GridPlacementSystem
                 placedObject.GetInstanceID().ToString(),
                 selectedGridObjectSO,
                 placedObjectOrigin,
-                _dir));
+                _dir, constructionState));
             OnObjectPlaced?.Invoke(this, EventArgs.Empty);
             _lastDemolishPlaceData = null;
         }
