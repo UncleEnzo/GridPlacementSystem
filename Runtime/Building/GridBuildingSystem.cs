@@ -681,13 +681,15 @@ namespace Nevelson.GridPlacementSystem
         bool Demolish(bool isMoveDemolish, GridObject gridObject, out string error)
         {
             error = "";
-            PlacedObject placedObject = gridObject.PlacedObject;
-            if (placedObject == null)
+            if (gridObject == null || gridObject.PlacedObject == null)
             {
                 error = "Nothing to demolish";
                 Debug.Log(error);
                 return false;
             }
+
+            PlacedObject placedObject = gridObject.PlacedObject;
+
             if (!isMoveDemolish && !placedObject.IsDestructable)
             {
                 error = "Object is indestructable";
