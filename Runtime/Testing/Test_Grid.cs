@@ -88,18 +88,18 @@ namespace Nevelson.GridPlacementSystem
 
             if (Input.GetKeyDown(KeyCode.B))
             {
-                GBS.SetBuildMode(BuildMode.BUILD);
+                GBS.SetBuildMode(BuildMode.BUILD, out string error);
             }
 
             //D is for display so I just changed it
             if (Input.GetKeyDown(KeyCode.G))
             {
-                GBS.SetBuildMode(BuildMode.DEMOLISH);
+                GBS.SetBuildMode(BuildMode.DEMOLISH, out string error);
             }
 
             if (Input.GetKeyDown(KeyCode.M))
             {
-                GBS.SetBuildMode(BuildMode.MOVE);
+                GBS.SetBuildMode(BuildMode.MOVE, out string error);
             }
 
             if (Input.GetMouseButtonDown(0))
@@ -107,35 +107,35 @@ namespace Nevelson.GridPlacementSystem
                 switch (GBS.BuildMode)
                 {
                     case BuildMode.BUILD:
-                        GBS.BuildSelectedObject();
+                        GBS.BuildSelectedObject(out string error);
                         break;
                     case BuildMode.DEMOLISH:
-                        GBS.DemolishObject();
+                        GBS.DemolishObject(out error);
                         break;
                     case BuildMode.MOVE:
-                        GBS.PickAndPlaceMoveObject();
+                        GBS.PickAndPlaceMoveObject(out error);
                         break;
                 }
             }
 
             if (Input.GetMouseButtonDown(1))
             {
-                GBS.UndoMove();
+                GBS.UndoMove(out string error);
             }
 
             if (Input.GetKeyDown(KeyCode.R))
             {
-                GBS.RotateSelectedObject();
+                GBS.RotateSelectedObject(out string error);
             }
 
             if (Input.GetKeyDown(KeyCode.Alpha0))
             {
-                GBS.ChangeSelectedBuildObject(-1);
+                GBS.ChangeSelectedBuildObject(-1, out string error);
             }
 
             if (Input.GetKeyDown(KeyCode.Alpha1))
             {
-                GBS.ChangeSelectedBuildObject(0);
+                GBS.ChangeSelectedBuildObject(0, out string error);
             }
 
             //not in the list currently

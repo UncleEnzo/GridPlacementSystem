@@ -9,18 +9,18 @@ namespace Nevelson.GridPlacementSystem
 
         public PlacedObject GetPlacedObjectAtMousePos();
 
-        public bool SetBuildMode(BuildMode buildMode);
+        public bool SetBuildMode(BuildMode buildMode, out string error);
 
-        public bool BuildSelectedObject();
+        public bool BuildSelectedObject(out string error);
 
-        public bool RotateSelectedObject();
+        public bool RotateSelectedObject(out string error);
 
-        public bool ChangeSelectedBuildObject(int gridObjectIndex);
+        public bool ChangeSelectedBuildObject(int gridObjectIndex, out string error);
 
-        public bool PickAndPlaceMoveObject();
+        public bool PickAndPlaceMoveObject(out string error);
 
-        public bool UndoMove();
+        public bool UndoMove(out string error);
 
-        public bool DemolishObject();
+        public bool DemolishObject(out string error);
     }
 }

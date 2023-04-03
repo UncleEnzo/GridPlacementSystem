@@ -129,7 +129,7 @@ namespace Nevelson.GridPlacementSystem
 
         public bool DisplayGrid(bool isGridDisplayed)
         {
-            SetBuildMode(BuildMode.BUILD);
+            SetBuildMode(BuildMode.BUILD, out string error);
             _isGridDisplayed = isGridDisplayed; //do this set build mode or won't work
             _buildingGhost.SetActive(_isGridDisplayed);
             ShowOrHideGridTiles();
@@ -137,19 +137,22 @@ namespace Nevelson.GridPlacementSystem
             return true;
         }
 
-        public bool SetBuildMode(BuildMode buildMode)
+        public bool SetBuildMode(BuildMode buildMode, out string error)
         {
-            if (!VerifyBuildAction()) return false;
+            if (!VerifyBuildAction(out error)) return false;
             PerformRotationReset();
 
             if (this.buildMode == buildMode)
             {
-                Debug.Log($"Not setting build mode because mode is already {buildMode}");
+                error = $"Not setting build mode because mode is already {buildMode}";
+                Debug.Log(error);
                 return false;
             }
+
             this.buildMode = buildMode;
             UndoMoveDemolishTilesColors();
             UndoSelectedTilesColors();
+
             switch (buildMode)
             {
                 case BuildMode.BUILD:
@@ -167,43 +170,26 @@ namespace Nevelson.GridPlacementSystem
                     DeselectBuildObject();
                     return true;
                 default:
-                    Debug.LogError("Build mode doesn't exist");
+                    error = $"Build mode doesn't exist";
+                    Debug.LogError(error);
                     return false;
             }
         }
 
-        bool SetNewBuildingState(ConstructionState constructionState, GridObject gridObject)
+        public bool BuildSelectedObject(out string error)
         {
-            //not doing verify cause we want this done even on NON displayed grids
-            bool ok = Demolish(true, gridObject);
-            if (!ok)
-            {
-                Debug.Log($"Did not demolish object at position");
-                return false;
-            }
-
-            _lastDemolishPlaceData.ConstructionState = constructionState;
-            UndoLastDemolish();
-            _OnGridUpdate?.Invoke(_placedGridObjects);
-
-            //Calling this again to HIDE tiles
-            ShowOrHideGridTiles();
-            return true;
-        }
-
-        public bool BuildSelectedObject()
-        {
-            if (!VerifyBuildAction()) return false;
+            if (!VerifyBuildAction(out error)) return false;
             PerformRotationReset();
             if (buildMode != BuildMode.BUILD)
             {
-                Debug.LogWarning($"Attempting to perform build action while build mode set to: {buildMode}. Not allowing");
+                error = $"Attempting to perform build action while build mode set to: {buildMode}. Not allowing";
+                Debug.LogWarning(error);
                 return false;
             }
 
             Debug.Log($"Build Mode is: {buildMode}. Attempting to build: {_selectedGridObjectSO.name}");
 
-            bool ok = Build(_buildSound, _selectedGridObjectSO, ConstructionState.CONSTRUCTION);
+            bool ok = Build(_buildSound, _selectedGridObjectSO, ConstructionState.CONSTRUCTION, out error);
             if (!ok)
             {
                 Debug.Log($"Could not build {_selectedGridObjectSO.name} at location.");
@@ -215,40 +201,48 @@ namespace Nevelson.GridPlacementSystem
             return ok;
         }
 
-        public bool RotateSelectedObject()
+        public bool RotateSelectedObject(out string error)
         {
-            if (!VerifyBuildAction()) return false;
+            if (!VerifyBuildAction(out error)) return false;
             PerformRotationReset();
             if (buildMode != BuildMode.BUILD && buildMode != BuildMode.MOVE)
             {
-                Debug.LogWarning($"Attempting to perform rotate action while build mode set to: {buildMode}. Not allowing");
+                error = $"Attempting to perform rotate action while build mode set to: {buildMode}. Not allowing";
+                Debug.LogWarning(error);
                 return false;
             }
 
             if (_selectedGridObjectSO == null)
             {
-                Debug.Log("Not object selected to rotate. Not Performing.");
+                error = $"No object selected to rotate";
+                Debug.Log(error);
                 return false;
             }
 
             Debug.Log($"Build Mode is: {buildMode}, performing rotate");
-            Rotate();
+            if (!Rotate(out error))
+            {
+                return false;
+            }
+
             return true;
         }
 
-        public bool ChangeSelectedBuildObject(int gridObjectIndex)
+        public bool ChangeSelectedBuildObject(int gridObjectIndex, out string error)
         {
-            if (!VerifyBuildAction()) return false;
+            if (!VerifyBuildAction(out error)) return false;
             PerformRotationReset();
             if (buildMode != BuildMode.BUILD)
             {
-                Debug.LogWarning($"Attempting to perform change selected object build action while build mode set to: {buildMode}. Not allowing");
+                error = $"Attempting to perform change selected object build action while build mode set to: {buildMode}. Not allowing";
+                Debug.LogWarning(error);
                 return false;
             }
 
             if (gridObjectIndex < -1 || gridObjectIndex > _gridObjects.Count - 1)
             {
-                Debug.LogError($"{gridObjectIndex} is not out of bounds of the _gridObjects list");
+                error = $"{gridObjectIndex} is out of bounds of the _gridObjects list";
+                Debug.LogError(error);
                 return false;
             }
 
@@ -266,48 +260,53 @@ namespace Nevelson.GridPlacementSystem
         }
 
         //note: this will perform both the move and the placement and just report which it is
-        public bool PickAndPlaceMoveObject()
+        public bool PickAndPlaceMoveObject(out string error)
         {
-            if (!VerifyBuildAction()) return false;
+            if (!VerifyBuildAction(out error)) return false;
             PerformRotationReset();
             if (buildMode != BuildMode.MOVE)
             {
-                Debug.LogWarning($"Attempting to perform build action while build mode set to: {buildMode}. Not allowing");
+                error = $"Attempting to perform build action while build mode set to: {buildMode}. Not allowing";
+                Debug.LogWarning(error);
                 return false;
             }
 
             if (!_movingObject)
             {
                 Debug.Log($"Build Mode is: {buildMode}, Selecting object to move");
-                SelectMoveObject();
+                if (!SelectMoveObject(out error))
+                {
+                    return false;
+                }
                 return true;
             }
 
             Debug.Log($"Build Mode is: {buildMode}, moving selected object");
-            bool ok = Move();
-            if (!ok)
+            if (!Move(out error))
             {
                 Debug.Log($"Failed to place {_selectedGridObjectSO.name} at position");
                 return false;
             }
 
             _OnGridUpdate?.Invoke(_placedGridObjects);
-            return ok;
+            return true;
         }
 
-        public bool UndoMove()
+        public bool UndoMove(out string error)
         {
-            if (!VerifyBuildAction()) return false;
+            if (!VerifyBuildAction(out error)) return false;
             PerformRotationReset();
             if (buildMode != BuildMode.MOVE)
             {
-                Debug.LogWarning($"Attempting to perform build action while build mode set to: {buildMode}. Not allowing");
+                error = $"Attempting to perform build action while build mode set to: {buildMode}. Not allowing";
+                Debug.LogWarning(error);
                 return false;
             }
 
             if (!_movingObject)
             {
-                Debug.Log($"Attempting to undo move operation but no object selected to move. Not performing.");
+                error = $"No object selected to move";
+                Debug.Log(error);
                 return false;
             }
 
@@ -317,19 +316,20 @@ namespace Nevelson.GridPlacementSystem
             return true;
         }
 
-        public bool DemolishObject()
+        public bool DemolishObject(out string error)
         {
-            if (!VerifyBuildAction()) return false;
+            if (!VerifyBuildAction(out error)) return false;
             PerformRotationReset();
             if (buildMode != BuildMode.DEMOLISH)
             {
-                Debug.LogWarning($"Attempting to perform demolish action while build mode set to: {buildMode}. Not allowing");
+                error = $"Attempting to perform demolish action while build mode set to: {buildMode}. Not allowing";
+                Debug.LogWarning(error);
                 return false;
             }
 
             Debug.Log($"Build Mode is: {buildMode}, performing Demolish");
             GridObject gridObject = _grid.GetGridObject(GetMouseWorldPosition());
-            bool ok = Demolish(false, gridObject);
+            bool ok = Demolish(false, gridObject, out error);
             if (!ok)
             {
                 Debug.Log($"Did not demolish object at position");
@@ -382,6 +382,25 @@ namespace Nevelson.GridPlacementSystem
         void OnApplicationQuit()
         {
             DisplayGrid(false);
+        }
+
+        bool SetNewBuildingState(ConstructionState constructionState, GridObject gridObject)
+        {
+            //not doing verify cause we want this done even on NON displayed grids
+            bool ok = Demolish(true, gridObject, out string error);
+            if (!ok)
+            {
+                Debug.Log($"Did not demolish object at position");
+                return false;
+            }
+
+            _lastDemolishPlaceData.ConstructionState = constructionState;
+            UndoLastDemolish();
+            _OnGridUpdate?.Invoke(_placedGridObjects);
+
+            //Calling this again to HIDE tiles
+            ShowOrHideGridTiles();
+            return true;
         }
 
         void PreInstantiateGridObjects(List<PreInitObject> preInitObject)
@@ -489,21 +508,28 @@ namespace Nevelson.GridPlacementSystem
                 this);
         }
 
-        void SelectMoveObject()
+        bool SelectMoveObject(out string error)
         {
-            if (_movingObject) return;
+            error = "";
+            if (_movingObject)
+            {
+                error = "Already moving an object";
+                return false;
+            }
             _grid.GetXY(GetMouseWorldPosition(), out int x, out int y);
             GridObject gridObject = _grid.GetGridObject(x, y);
             if (gridObject == null || gridObject.PlacedObject == null)
             {
-                Debug.Log("Did not find object to move");
-                return;
+                error = "No object to move";
+                Debug.Log(error);
+                return false;
             }
 
             if (!gridObject.PlacedObject.IsMovable)
             {
-                Debug.Log("Grid object is marked as Immovable. Not moving");
-                return;
+                error = "Can't move this object";
+                Debug.Log(error);
+                return false;
             }
 
             Debug.Log($"Moving {gridObject.PlacedObject.gameObject.name}");
@@ -542,8 +568,13 @@ namespace Nevelson.GridPlacementSystem
                 SelectGridObject(index, _gridObjects);
             }
 
-            Demolish(true, gridObject);
+            if (Demolish(true, gridObject, out error))
+            {
+                return false;
+            }
+
             _movingObject = true;
+            return true;
         }
 
         void UndoSelectedMoveObject()
@@ -555,12 +586,17 @@ namespace Nevelson.GridPlacementSystem
             _movingObject = false;
         }
 
-        bool Move()
+        bool Move(out string error)
         {
+            error = "";
             if (!Build(
                 _moveSound,
                 _selectedGridObjectSO,
-                _lastDemolishPlaceData.ConstructionState)) return false;
+                _lastDemolishPlaceData.ConstructionState,
+                out error))
+            {
+                return false;
+            }
             _movingObject = false;
             _lastDemolishPlaceData = null;
             DeselectBuildObject();
@@ -569,19 +605,28 @@ namespace Nevelson.GridPlacementSystem
 
         bool Build(AudioClip soundEffect,
             GridPlacementObjectSO gridPlacementObject,
-            ConstructionState constructionState)
+            ConstructionState constructionState,
+            out string error)
         {
-            if (gridPlacementObject == null) return false;
+            error = "";
+            if (gridPlacementObject == null)
+            {
+                error = "No object to build";
+                return false;
+            }
+
             if (!CheckSurroundingSpace(gridPlacementObject))
             {
-                Debug.Log("Can't build, space already taken");
+                error = "Space is occupied";
+                Debug.Log(error);
                 return false;
             }
 
             int idx = _gridObjects.IndexOf(gridPlacementObject);
             if (!CheckIfMaxOfObjectPlaced(gridPlacementObject))
             {
-                Debug.Log("Can't perform build because max count reached");
+                error = "Can't place any more of this object";
+                Debug.Log(error);
                 return false;
             }
 
@@ -597,7 +642,8 @@ namespace Nevelson.GridPlacementSystem
             GridObject gridObject = _grid.GetGridObject(x, y);
             if (gridObject == null)
             {
-                Debug.LogError("Could not find gridobject");
+                error = "Could not find gridobject";
+                Debug.LogError(error);
                 return false;
             }
 
@@ -634,17 +680,20 @@ namespace Nevelson.GridPlacementSystem
             return true;
         }
 
-        bool Demolish(bool isMoveDemolish, GridObject gridObject)
+        bool Demolish(bool isMoveDemolish, GridObject gridObject, out string error)
         {
+            error = "";
             PlacedObject placedObject = gridObject.PlacedObject;
             if (placedObject == null)
             {
-                Debug.Log("Placed Object is set to null, not demolishing");
+                error = "Nothing to demolish";
+                Debug.Log(error);
                 return false;
             }
             if (!isMoveDemolish && !placedObject.IsDestructable)
             {
-                Debug.Log("Object is not marked as destructible, not destroying");
+                error = "Object is indestructable";
+                Debug.Log(error);
                 return false;
             }
 
@@ -728,14 +777,17 @@ namespace Nevelson.GridPlacementSystem
             _lastDemolishPlaceData = null;
         }
 
-        void Rotate()
+        bool Rotate(out string error)
         {
+            error = "";
             if (_selectedGridObjectSO != null && !_selectedGridObjectSO.IsRotatable)
             {
-                Debug.Log("This grid object SO is marked as not able to rotate");
-                return;
+                error = "This object can't be rotated";
+                Debug.Log(error);
+                return false;
             }
             _dir = GridPlacementObjectSO.GetNextDir(_dir);
+            return true;
         }
 
         void SelectGridObject(int i, List<GridPlacementObjectSO> gridList)
@@ -764,11 +816,13 @@ namespace Nevelson.GridPlacementSystem
             return true;
         }
 
-        bool VerifyBuildAction()
+        bool VerifyBuildAction(out string error)
         {
+            error = "";
             if (!_isGridDisplayed)
             {
-                Debug.LogWarning($"Not performing action because grid is not displayed");
+                error = $"Not performing action because grid is not displayed";
+                Debug.LogWarning(error);
                 return false;
             }
             return true;
@@ -781,7 +835,7 @@ namespace Nevelson.GridPlacementSystem
             Debug.Log("Resetting rotation");
             while (_dir != GridPlacementObjectSO.Dir.Down)
             {
-                Rotate();
+                Rotate(out string error);
             }
         }
 
