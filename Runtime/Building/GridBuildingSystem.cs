@@ -329,15 +329,14 @@ namespace Nevelson.GridPlacementSystem
 
             Debug.Log($"Build Mode is: {buildMode}, performing Demolish");
             GridObject gridObject = _grid.GetGridObject(GetMouseWorldPosition());
-            bool ok = Demolish(false, gridObject, out error);
-            if (!ok)
+            if (!Demolish(false, gridObject, out error))
             {
-                Debug.Log($"Did not demolish object at position");
+                Debug.Log(error);
                 return false;
             }
 
             _OnGridUpdate?.Invoke(_placedGridObjects);
-            return ok;
+            return true;
         }
 
 
@@ -387,10 +386,9 @@ namespace Nevelson.GridPlacementSystem
         bool SetNewBuildingState(ConstructionState constructionState, GridObject gridObject)
         {
             //not doing verify cause we want this done even on NON displayed grids
-            bool ok = Demolish(true, gridObject, out string error);
-            if (!ok)
+            if (!Demolish(true, gridObject, out string error))
             {
-                Debug.Log($"Did not demolish object at position");
+                Debug.Log(error);
                 return false;
             }
 
@@ -568,7 +566,7 @@ namespace Nevelson.GridPlacementSystem
                 SelectGridObject(index, _gridObjects);
             }
 
-            if (Demolish(true, gridObject, out error))
+            if (!Demolish(true, gridObject, out error))
             {
                 return false;
             }
