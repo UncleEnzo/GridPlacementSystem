@@ -106,7 +106,7 @@ namespace Nevelson.GridPlacementSystem
             _constructionState = _useContructionState ? constructionState : ConstructionState.NONE;
             _setConstructionState = setConstructionState;
             //determine the placed object's transparency based on construction state (Should probably be a callback handled by outside items
-            if (constructionState == ConstructionState.CONSTRUCTION)
+            if (ConstructionState == ConstructionState.CONSTRUCTION)
             {
                 SpriteRenderer sp = GetComponentInChildren<SpriteRenderer>();
                 Color newColor = sp.color;
