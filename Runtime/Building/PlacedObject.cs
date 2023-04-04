@@ -11,6 +11,7 @@ namespace Nevelson.GridPlacementSystem
         [SerializeField] bool _isMovable = true;
         [SerializeField] bool _isDestructable = true;
         [SerializeField] bool _useContructionState = true;
+        string _id;
         GridPlacementObjectSO _gridObjectSO;
         Vector2Int _origin;
         GridPlacementObjectSO.Dir _dir;
@@ -23,6 +24,11 @@ namespace Nevelson.GridPlacementSystem
         public ConstructionState ConstructionState
         {
             get => _useContructionState ? _constructionState : ConstructionState.NONE;
+        }
+
+        public string ID
+        {
+            get => _id;
         }
 
         public bool SetConstructionState(ConstructionState constructionState)
@@ -46,6 +52,7 @@ namespace Nevelson.GridPlacementSystem
         }
 
         public static PlacedObject Create(
+            string id,
             Vector3 worldPosition,
             Vector2Int origin,
             GridPlacementObjectSO.Dir dir,
@@ -60,12 +67,13 @@ namespace Nevelson.GridPlacementSystem
                 Quaternion.Euler(0, gridObjectSO.GetRotationAngle(dir), 0)
                 );
             PlacedObject placedObject = placedObjectTransform.GetComponent<PlacedObject>();
-            placedObject.Setup(gridObjectSO, origin, dir, gridObject, constructionState, setConstructionState);
+            placedObject.Setup(id, gridObjectSO, origin, dir, gridObject, constructionState, setConstructionState);
             return placedObject;
         }
         public PlacedObjectData GetData()
         {
             return new PlacedObjectData(
+                _id,
                 _gridObjectSO,
                 _origin,
                 _dir,
@@ -77,6 +85,7 @@ namespace Nevelson.GridPlacementSystem
         }
 
         void Setup(
+            string id,
             GridPlacementObjectSO placedObjectTypeSO,
             Vector2Int origin,
             GridPlacementObjectSO.Dir dir,
@@ -84,6 +93,7 @@ namespace Nevelson.GridPlacementSystem
             ConstructionState constructionState,
             Func<ConstructionState, GridObject, bool> setConstructionState)
         {
+            _id = id;
             _gridObject = gridObject;
             _gridObjectSO = placedObjectTypeSO;
             _origin = origin;

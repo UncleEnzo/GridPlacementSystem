@@ -4,7 +4,7 @@ namespace Nevelson.GridPlacementSystem
 {
     public class PlacedGridObject
     {
-        public string PlacedObjectID;
+        public string ID;
         public PlacedObject PlacedObject;
         public Vector2 TilePosition;
         public GridPlacementObjectSO GridObjectSO;
@@ -12,14 +12,14 @@ namespace Nevelson.GridPlacementSystem
         public ConstructionState ConstructionState;
 
         public PlacedGridObject(
-            string PlacedObjectID,
+            string ID,
             PlacedObject PlacedObject,
             GridPlacementObjectSO GridObjectSO,
             Vector2 TilePosition,
             GridPlacementObjectSO.Dir Dir,
             ConstructionState ConstructionState)
         {
-            this.PlacedObjectID = PlacedObjectID;
+            this.ID = ID;
             this.PlacedObject = PlacedObject;
             this.GridObjectSO = GridObjectSO;
             this.TilePosition = TilePosition;
@@ -29,7 +29,7 @@ namespace Nevelson.GridPlacementSystem
 
         public override string ToString()
         {
-            return $"PlacedObjectID {PlacedObjectID} | Tile pos: {TilePosition} | GridObjectSO {GridObjectSO.prefab.name} | Rotation: {Dir} | Construction State: {ConstructionState}";
+            return $"BuildingID {ID} | Tile pos: {TilePosition} | GridObjectSO {GridObjectSO.prefab.name} | Rotation: {Dir} | Construction State: {ConstructionState}";
         }
     }
 }
