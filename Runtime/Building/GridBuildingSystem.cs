@@ -27,6 +27,10 @@ namespace Nevelson.GridPlacementSystem
         [SerializeField] Color _occupiedTileColor;
         [SerializeField] Color _moveOrDestroyColor;
 
+        public UnityEvent<PlacedGridObject> _OnBuild;
+        public UnityEvent<PlacedGridObject> _OnMove;
+        public UnityEvent _OnDestroy;
+
         [Header("Place grid objects here you want instantiated before game starts")]
         [SerializeField] List<PreInitObject> _preInitGridObjects;
 
@@ -189,7 +193,11 @@ namespace Nevelson.GridPlacementSystem
 
             Debug.Log($"Build Mode is: {buildMode}. Attempting to build: {_selectedGridObjectSO.name}");
 
-            bool ok = Build(_buildSound, _selectedGridObjectSO, ConstructionState.CONSTRUCTION, out error);
+            bool ok = Build(_buildSound,
+                _selectedGridObjectSO,
+                ConstructionState.CONSTRUCTION,
+                out PlacedGridObject placedGridObject,
+                out error);
             if (!ok)
             {
                 Debug.Log($"Could not build {_selectedGridObjectSO.name} at location.");
@@ -197,6 +205,7 @@ namespace Nevelson.GridPlacementSystem
             }
 
             _OnGridUpdate?.Invoke(_placedGridObjects);
+            _OnBuild?.Invoke(placedGridObject);
             Debug.Log($"Build of {_selectedGridObjectSO.name} was successful.");
             return ok;
         }
@@ -282,13 +291,14 @@ namespace Nevelson.GridPlacementSystem
             }
 
             Debug.Log($"Build Mode is: {buildMode}, moving selected object");
-            if (!Move(out error))
+            if (!Move(out PlacedGridObject placedGridObject, out error))
             {
                 Debug.Log($"Failed to place {_selectedGridObjectSO.name} at position");
                 return false;
             }
 
             _OnGridUpdate?.Invoke(_placedGridObjects);
+            _OnMove?.Invoke(placedGridObject);
             return true;
         }
 
@@ -336,6 +346,7 @@ namespace Nevelson.GridPlacementSystem
             }
 
             _OnGridUpdate?.Invoke(_placedGridObjects);
+            _OnDestroy?.Invoke();
             return true;
         }
 
@@ -472,11 +483,12 @@ namespace Nevelson.GridPlacementSystem
 
                 preInitedPlacedObject = new PlacedGridObject(
                     placedObject.GetInstanceID().ToString(),
+                    placedObject,
                     buildObject,
                     tilePos,
                     dir,
                     constructionState);
-
+                _OnBuild?.Invoke(preInitedPlacedObject);
                 OnObjectPlaced?.Invoke(this, EventArgs.Empty);
                 return true;
             }
@@ -584,13 +596,15 @@ namespace Nevelson.GridPlacementSystem
             _movingObject = false;
         }
 
-        bool Move(out string error)
+        bool Move(out PlacedGridObject placedGridObject, out string error)
         {
             error = "";
+            placedGridObject = null;
             if (!Build(
                 _moveSound,
                 _selectedGridObjectSO,
                 _lastDemolishPlaceData.ConstructionState,
+                out placedGridObject,
                 out error))
             {
                 return false;
@@ -604,9 +618,11 @@ namespace Nevelson.GridPlacementSystem
         bool Build(AudioClip soundEffect,
             GridPlacementObjectSO gridPlacementObject,
             ConstructionState constructionState,
+            out PlacedGridObject placedGridObject,
             out string error)
         {
             error = "";
+            placedGridObject = null;
             if (gridPlacementObject == null)
             {
                 error = "No object to build";
@@ -668,12 +684,15 @@ namespace Nevelson.GridPlacementSystem
             BuildingSound.transform.position = GetMouseWorldPosition();
             BuildingSound.PlayOneShot(soundEffect);
 
-            _placedGridObjects.Add(new PlacedGridObject(
+            placedGridObject = new PlacedGridObject(
                 placedObject.GetInstanceID().ToString(),
+                placedObject,
                 gridPlacementObject,
                 placedObjectOrigin,
                 _dir,
-                constructionState));
+                constructionState);
+
+            _placedGridObjects.Add(placedGridObject);
             OnObjectPlaced?.Invoke(this, EventArgs.Empty);
             return true;
         }
@@ -770,6 +789,7 @@ namespace Nevelson.GridPlacementSystem
             //update the placed list, don't need to send this info
             _placedGridObjects.Add(new PlacedGridObject(
                 placedObject.GetInstanceID().ToString(),
+                placedObject,
                 selectedGridObjectSO,
                 placedObjectOrigin,
                 _dir, constructionState));

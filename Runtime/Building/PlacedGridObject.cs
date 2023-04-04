@@ -5,6 +5,7 @@ namespace Nevelson.GridPlacementSystem
     public class PlacedGridObject
     {
         public string PlacedObjectID;
+        public PlacedObject PlacedObject;
         public Vector2 TilePosition;
         public GridPlacementObjectSO GridObjectSO;
         public GridPlacementObjectSO.Dir Dir;
@@ -12,12 +13,14 @@ namespace Nevelson.GridPlacementSystem
 
         public PlacedGridObject(
             string PlacedObjectID,
+            PlacedObject PlacedObject,
             GridPlacementObjectSO GridObjectSO,
             Vector2 TilePosition,
             GridPlacementObjectSO.Dir Dir,
             ConstructionState ConstructionState)
         {
             this.PlacedObjectID = PlacedObjectID;
+            this.PlacedObject = PlacedObject;
             this.GridObjectSO = GridObjectSO;
             this.TilePosition = TilePosition;
             this.Dir = Dir;
