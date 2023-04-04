@@ -31,6 +31,11 @@ namespace Nevelson.GridPlacementSystem
             get => _id;
         }
 
+        public GridPlacementObjectSO GridObjectSO
+        {
+            get => _gridObjectSO;
+        }
+
         public bool SetConstructionState(ConstructionState constructionState)
         {
             if (!_useContructionState)

@@ -6,6 +6,8 @@ namespace Nevelson.GridPlacementSystem
     public class Test_Grid : MonoBehaviour
     {
         [SerializeField] PreInitObject[] preInitObjs;
+        [SerializeField] GridPlacementObjectSO house;
+        [SerializeField] GridPlacementObjectSO market;
         [SerializeField] GameObject gbsPrefab;
         Grid<HeatMapGridObject> _heatGrid;
         Grid<StringGridObject> _stringGrid;
@@ -128,14 +130,14 @@ namespace Nevelson.GridPlacementSystem
                 GBS.RotateSelectedObject(out string error);
             }
 
-            if (Input.GetKeyDown(KeyCode.Alpha0))
-            {
-                GBS.ChangeSelectedBuildObject(-1, out string error);
-            }
-
             if (Input.GetKeyDown(KeyCode.Alpha1))
             {
-                GBS.ChangeSelectedBuildObject(0, out string error);
+                GBS.ChangeSelectedBuildObject(house, out string error);
+            }
+
+            if (Input.GetKeyDown(KeyCode.Alpha2))
+            {
+                GBS.ChangeSelectedBuildObject(market, out string error);
             }
 
             //not in the list currently

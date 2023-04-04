@@ -60,9 +60,17 @@ MonoBehaviour:
   _cannotBuildTileColor: {r: 1, g: 0, b: 0, a: 0}
   _occupiedTileColor: {r: 1, g: 0, b: 0.89152145, a: 0}
   _moveOrDestroyColor: {r: 1, g: 0.7412394, b: 0, a: 0}
+  _OnBuild:
+    m_PersistentCalls:
+      m_Calls: []
+  _OnMove:
+    m_PersistentCalls:
+      m_Calls: []
+  _OnDestroy:
+    m_PersistentCalls:
+      m_Calls: []
+  _defaultSelectedObject: {fileID: 11400000, guid: 9c80bccf972bbe64c97e6da81a8f11a0, type: 2}
   _preInitGridObjects: []
-  _gridObjects:
-  - {fileID: 11400000, guid: e160f5a5bee9875469c5921651bfd5af, type: 2}
   _OnGridUpdate:
     m_PersistentCalls:
       m_Calls:

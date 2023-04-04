@@ -31,11 +31,11 @@ namespace Nevelson.GridPlacementSystem
         public UnityEvent<PlacedGridObject> _OnMove;
         public UnityEvent _OnDestroy;
 
+        [Header("The object that gets auto selected when setting to build mode")]
+        [SerializeField] GridPlacementObjectSO _defaultSelectedObject;
+
         [Header("Place grid objects here you want instantiated before game starts")]
         [SerializeField] List<PreInitObject> _preInitGridObjects;
-
-        [Header("Place objects here you want player to be able to instantiate on build")]
-        [SerializeField] List<GridPlacementObjectSO> _gridObjects;
 
         [Header("Use this event for callbacks that do stuff with the update grid data (like saving)")]
         [SerializeField] UnityEvent<List<PlacedGridObject>> _OnGridUpdate;
@@ -88,14 +88,6 @@ namespace Nevelson.GridPlacementSystem
             //_buildSound = Resources.Load<>();
             //_demolishSound = Resources.Load<>();
             _OnGridUpdate.AddListener((List<PlacedGridObject> p) => Debug.Log(p.ToString()));
-        }
-
-        public void AddPlaceableGridObject(GridPlacementObjectSO[] gridObjects)
-        {
-            foreach (GridPlacementObjectSO obj in gridObjects)
-            {
-                _gridObjects.Add(obj);
-            }
         }
 
         #region PreinitOperations
@@ -162,7 +154,7 @@ namespace Nevelson.GridPlacementSystem
                 case BuildMode.BUILD:
                     Debug.Log("Build Mode Activated");
                     UndoSelectedMoveObject();
-                    SelectGridObject(0, _gridObjects);
+                    SelectGridObject(_defaultSelectedObject);
                     return true;
                 case BuildMode.DEMOLISH:
                     Debug.Log("Demolish Mode Activated");
@@ -237,7 +229,7 @@ namespace Nevelson.GridPlacementSystem
             return true;
         }
 
-        public bool ChangeSelectedBuildObject(int gridObjectIndex, out string error)
+        public bool ChangeSelectedBuildObject(GridPlacementObjectSO selectedGridObject, out string error)
         {
             if (!VerifyBuildAction(out error)) return false;
             PerformRotationReset();
@@ -248,22 +240,17 @@ namespace Nevelson.GridPlacementSystem
                 return false;
             }
 
-            if (gridObjectIndex < -1 || gridObjectIndex > _gridObjects.Count - 1)
-            {
-                error = $"{gridObjectIndex} is out of bounds of the _gridObjects list";
-                Debug.LogError(error);
-                return false;
-            }
-
-            if (gridObjectIndex == -1)
+            if (selectedGridObject == null)
             {
                 Debug.Log($"Build Mode is: {buildMode}, Deselecting grid object");
                 DeselectBuildObject();
                 return true;
             }
 
-            Debug.Log($"Build Mode is: {buildMode}, Selecting grid object: {gridObjectIndex}");
-            SelectGridObject(gridObjectIndex, _gridObjects);
+            Debug.Log($"Build Mode is: {buildMode}, Selecting grid object: {selectedGridObject}");
+            SelectGridObject(selectedGridObject);
+            UndoSelectedTilesColors();
+            UpdateSurroundingTileColors();
             return true;
 
         }
@@ -360,7 +347,7 @@ namespace Nevelson.GridPlacementSystem
                 $"width {_gridWidth} x height {_gridHeight} | Cellsize {_cellSize}\n" +
                 $"Debug: {_isDebug}" +
                 $"Transform position {transform.position}");
-            _selectedGridObjectSO = _gridObjects[0];
+            _selectedGridObjectSO = _defaultSelectedObject;
             _grid = new Grid<GridObject>(
                 _gridWidth,
                 _gridHeight,
@@ -540,38 +527,13 @@ namespace Nevelson.GridPlacementSystem
 
             Debug.Log($"Moving {gridObject.PlacedObject.gameObject.name}");
 
-            //check if the object exists in _gridObjects array
-            int index = _gridObjects.FindIndex((x) =>
+            if (gridObject.PlacedObject.GridObjectSO == null)
             {
-                bool foundObject = gridObject.PlacedObject.gameObject.name.Contains(x.prefab.name);
-                if (foundObject) Debug.Log($"Found object for move: {x.prefab.name}");
-                return foundObject;
-            });
-
-            //if not, check the preInit array as well
-            if (index == -1)
-            {
-                index = _preInitGridObjects.FindIndex((x) =>
-                {
-                    bool foundObject = gridObject.PlacedObject.gameObject.name.Contains(x.GridObject.prefab.name);
-                    if (foundObject) Debug.Log($"Found object for move: {x.GridObject.prefab.name}");
-                    return foundObject;
-                });
-
-
-                List<GridPlacementObjectSO> preInitObjs = new List<GridPlacementObjectSO>();
-                foreach (var gridObj in _preInitGridObjects)
-                {
-                    preInitObjs.Add(gridObj.GridObject);
-                }
-
-                SelectGridObject(index, preInitObjs);
+                Debug.LogError("Could not find grid object so in placed object");
+                return false;
             }
-            else
-            {
-                //if it's from the preinit array, select the grid object from there
-                SelectGridObject(index, _gridObjects);
-            }
+
+            SelectGridObject(gridObject.PlacedObject.GridObjectSO);
 
             if (!Demolish(true, gridObject, out error))
             {
@@ -600,11 +562,12 @@ namespace Nevelson.GridPlacementSystem
                 _moveSound,
                 _selectedGridObjectSO,
                 _lastDemolishPlaceData.ConstructionState,
-                out placedGridObject,
+                out PlacedGridObject _placedGridObject,
                 out error))
             {
                 return false;
             }
+            placedGridObject = _placedGridObject;
             _movingObject = false;
             _lastDemolishPlaceData = null;
             DeselectBuildObject();
@@ -650,7 +613,6 @@ namespace Nevelson.GridPlacementSystem
                 return false;
             }
 
-            int idx = _gridObjects.IndexOf(gridPlacementObject);
             if (!CheckIfMaxOfObjectPlaced(gridPlacementObject))
             {
                 error = "Can't place any more of this object";
@@ -826,9 +788,9 @@ namespace Nevelson.GridPlacementSystem
             return true;
         }
 
-        void SelectGridObject(int i, List<GridPlacementObjectSO> gridList)
+        void SelectGridObject(GridPlacementObjectSO gridObjectSO)
         {
-            _selectedGridObjectSO = gridList[i];
+            _selectedGridObjectSO = gridObjectSO;
             RefreshSelectedObjectType();
         }
 

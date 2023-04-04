@@ -15,7 +15,7 @@ namespace Nevelson.GridPlacementSystem
 
         public bool RotateSelectedObject(out string error);
 
-        public bool ChangeSelectedBuildObject(int gridObjectIndex, out string error);
+        public bool ChangeSelectedBuildObject(GridPlacementObjectSO selectedGridObject, out string error);
 
         public bool PickAndPlaceMoveObject(out string error);
 
