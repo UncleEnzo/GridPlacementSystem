@@ -414,7 +414,7 @@ namespace Nevelson.GridPlacementSystem
             {
                 _grid.GetXY((Vector2)tilePosWithTransOffset, out int x, out int y);
                 Vector2Int placedObjectOrigin = new Vector2Int(x, y);
-                List<Vector2Int> gridPositionList = _selectedGridObjectSO.GetGridPositionList(placedObjectOrigin, preInitObject.Dir);
+                List<Vector2Int> gridPositionList = preInitObject.GridObject.GetGridPositionList(placedObjectOrigin, preInitObject.Dir);
                 foreach (Vector2Int gridPosition in gridPositionList)
                 {
                     //if the surrounding tile is outside grid bounds or can't build
