@@ -329,7 +329,11 @@ namespace Nevelson.GridPlacementSystem
             GridObject gridObject = _grid.GetGridObject(GetMouseWorldPosition());
 
             //caching now, if operation succeeds supplying the id
-            string cachedDemolishedObjID = gridObject.PlacedObject.ID;
+            string cachedDemolishedObjID = "";
+            if (gridObject != null && gridObject.PlacedObject != null)
+            {
+                cachedDemolishedObjID = gridObject.PlacedObject.ID;
+            }
             if (!Demolish(false, gridObject, out error))
             {
                 Debug.Log(error);
