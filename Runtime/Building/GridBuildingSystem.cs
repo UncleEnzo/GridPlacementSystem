@@ -313,8 +313,9 @@ namespace Nevelson.GridPlacementSystem
             return true;
         }
 
-        public bool DemolishObject(out string error)
+        public bool DemolishObject(out string demolishedObjID, out string error)
         {
+            demolishedObjID = "";
             if (!VerifyBuildAction(out error)) return false;
             PerformRotationReset();
             if (buildMode != BuildMode.DEMOLISH)
@@ -326,12 +327,16 @@ namespace Nevelson.GridPlacementSystem
 
             Debug.Log($"Build Mode is: {buildMode}, performing Demolish");
             GridObject gridObject = _grid.GetGridObject(GetMouseWorldPosition());
+
+            //caching now, if operation succeeds supplying the id
+            string cachedDemolishedObjID = gridObject.PlacedObject.ID;
             if (!Demolish(false, gridObject, out error))
             {
                 Debug.Log(error);
                 return false;
             }
 
+            demolishedObjID = cachedDemolishedObjID;
             _OnGridUpdate?.Invoke(_placedGridObjects);
             _OnDestroy?.Invoke();
             return true;
@@ -581,7 +586,7 @@ namespace Nevelson.GridPlacementSystem
             out PlacedGridObject placedGridObject,
             out string error)
         {
-            return Build(System.Guid.NewGuid().ToString(),
+            return Build(Guid.NewGuid().ToString(),
                 soundEffect,
                 gridPlacementObject,
                 constructionState,
@@ -662,7 +667,7 @@ namespace Nevelson.GridPlacementSystem
             BuildingSound.PlayOneShot(soundEffect);
 
             placedGridObject = new PlacedGridObject(
-                System.Guid.NewGuid().ToString(),
+                id,
                 placedObject,
                 gridPlacementObject,
                 placedObjectOrigin,

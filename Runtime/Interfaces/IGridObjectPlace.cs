@@ -21,6 +21,6 @@ namespace Nevelson.GridPlacementSystem
 
         public bool UndoMove(out string error);
 
-        public bool DemolishObject(out string error);
+        public bool DemolishObject(out string demolishObjectId, out string error);
     }
 }
