@@ -8,7 +8,7 @@ namespace Nevelson.GridPlacementSystem
 {
     public enum BuildMode { BUILD, MOVE, DEMOLISH }
 
-    public class GridBuildingSystem : MonoBehaviour, IPreinitGrid, IGridObjectPlace
+    public class GridBuildingSystem : MonoBehaviour, IPreinitGrid, IGridObjectPlace, ISubscribeGridCallbacks, IUnsubscribeGridCallbacks
     {
         [SerializeField] bool _displayGridOnStart = false;
         [SerializeField] bool _isDebug = true;
@@ -29,7 +29,7 @@ namespace Nevelson.GridPlacementSystem
 
         public UnityEvent<PlacedGridObject> _OnBuild;
         public UnityEvent<PlacedGridObject> _OnMove;
-        public UnityEvent _OnDestroy;
+        public UnityEvent<string> _OnDestroy;
 
         [Header("The object that gets auto selected when setting to build mode")]
         [SerializeField] GridPlacementObjectSO _defaultSelectedObject;
@@ -341,8 +341,8 @@ namespace Nevelson.GridPlacementSystem
             }
 
             demolishedObjID = cachedDemolishedObjID;
+            _OnDestroy?.Invoke(demolishedObjID);
             _OnGridUpdate?.Invoke(_placedGridObjects);
-            _OnDestroy?.Invoke();
             return true;
         }
 
@@ -1009,6 +1009,36 @@ namespace Nevelson.GridPlacementSystem
             return _selectedGridObjectSO == null ?
                 Quaternion.identity :
                 Quaternion.Euler(0, 0, -_selectedGridObjectSO.GetRotationAngle(_dir));
+        }
+
+        public void SubscribeOnBuildSuccess(UnityAction<PlacedGridObject> action)
+        {
+            _OnBuild.AddListener(action);
+        }
+
+        public void SubscribeOnMoveSuccess(UnityAction<PlacedGridObject> action)
+        {
+            _OnMove.AddListener(action);
+        }
+
+        public void SubscribeOnDestroySuccess(UnityAction<string> action)
+        {
+            _OnDestroy.AddListener(action);
+        }
+
+        public void UnsubscribeOnBuildSuccess(UnityAction<PlacedGridObject> action)
+        {
+            _OnBuild.RemoveListener(action);
+        }
+
+        public void UnsubscribeOnMoveSuccess(UnityAction<PlacedGridObject> action)
+        {
+            _OnMove.RemoveListener(action);
+        }
+
+        public void UnsubscribeOnDestroySuccess(UnityAction<string> action)
+        {
+            _OnDestroy.RemoveListener(action);
         }
     }
 }
