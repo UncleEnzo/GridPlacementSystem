@@ -112,8 +112,7 @@ namespace Nevelson.GridPlacementSystem
                         GBS.BuildSelectedObject(out string error);
                         break;
                     case BuildMode.DEMOLISH:
-                        GBS.DemolishObject(out string demoObjID, out error);
-                        Debug.Log($"DEMOLISHED OBJECT ID IS: {demoObjID}");
+                        GBS.DemolishObject(out error);
                         break;
                     case BuildMode.MOVE:
                         GBS.PickAndPlaceMoveObject(out error);

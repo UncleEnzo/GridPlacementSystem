@@ -313,9 +313,8 @@ namespace Nevelson.GridPlacementSystem
             return true;
         }
 
-        public bool DemolishObject(out string demolishedObjID, out string error)
+        public bool DemolishObject(out string error)
         {
-            demolishedObjID = "";
             if (!VerifyBuildAction(out error)) return false;
             PerformRotationReset();
             if (buildMode != BuildMode.DEMOLISH)
@@ -340,8 +339,7 @@ namespace Nevelson.GridPlacementSystem
                 return false;
             }
 
-            demolishedObjID = cachedDemolishedObjID;
-            _OnDestroy?.Invoke(demolishedObjID);
+            _OnDestroy?.Invoke(cachedDemolishedObjID);
             _OnGridUpdate?.Invoke(_placedGridObjects);
             return true;
         }

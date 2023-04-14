@@ -12,6 +12,6 @@ namespace Nevelson.GridPlacementSystem
         bool ChangeSelectedBuildObject(GridPlacementObjectSO selectedGridObject, out string error);
         bool PickAndPlaceMoveObject(out string error);
         bool UndoMove(out string error);
-        bool DemolishObject(out string demolishObjectId, out string error);
+        bool DemolishObject(out string error);
     }
 }
