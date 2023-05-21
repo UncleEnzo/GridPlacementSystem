@@ -43,8 +43,9 @@ namespace Nevelson.GridPlacementSystem
         [Header("Tile positions you don't want included in the array.  Use Debug to find positions")]
         [SerializeField] Vector2IntRanges[] ignoredTileRanges;
 
-        BuildMode buildMode = BuildMode.BUILD;
         List<PlacedGridObject> _placedGridObjects = new List<PlacedGridObject>();
+
+        BuildMode buildMode = BuildMode.BUILD;
         Grid<GridObject> _grid;
         List<GridObject> previousTiles = new List<GridObject>();
         List<GridObject> previousMoveDemolishTiles = new List<GridObject>();
@@ -751,7 +752,6 @@ namespace Nevelson.GridPlacementSystem
                 return;
             }
 
-
             PlacedObject placedObject = PlacedObject.Create(
                 _lastDemolishPlaceData.ID,
                 placedObjectWorldPosition,
@@ -774,7 +774,7 @@ namespace Nevelson.GridPlacementSystem
 
             //update the placed list, don't need to send this info
             _placedGridObjects.Add(new PlacedGridObject(
-                placedObject.GetInstanceID().ToString(),
+                _lastDemolishPlaceData.ID,
                 placedObject,
                 selectedGridObjectSO,
                 placedObjectOrigin,

@@ -21,8 +21,7 @@ namespace Nevelson.GridPlacementSystem
             bool IsMovable,
             bool IsDestructable,
             bool UseConstructionState,
-            ConstructionState ConstructionState,
-            string PlacedObjectID)
+            ConstructionState ConstructionState)
         {
             this.ID = _id;
             this.Dir = Dir;

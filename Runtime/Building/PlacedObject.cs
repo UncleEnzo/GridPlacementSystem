@@ -85,8 +85,7 @@ namespace Nevelson.GridPlacementSystem
                 _isMovable,
                 _isDestructable,
                 _useContructionState,
-                _constructionState,
-                GetInstanceID().ToString());
+                _constructionState);
         }
 
         void Setup(

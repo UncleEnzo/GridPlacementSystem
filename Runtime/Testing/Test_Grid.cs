@@ -110,12 +110,24 @@ namespace Nevelson.GridPlacementSystem
                 {
                     case BuildMode.BUILD:
                         GBS.BuildSelectedObject(out string error);
-                        break;
-                    case BuildMode.DEMOLISH:
-                        GBS.DemolishObject(out error);
+                        if (error != null && !error.Equals(""))
+                        {
+                            Debug.Log("Error is: " + error);
+                        }
                         break;
                     case BuildMode.MOVE:
                         GBS.PickAndPlaceMoveObject(out error);
+                        if (error != null && !error.Equals(""))
+                        {
+                            Debug.Log("Error is: " + error);
+                        }
+                        break;
+                    case BuildMode.DEMOLISH:
+                        GBS.DemolishObject(out error);
+                        if (error != null && !error.Equals(""))
+                        {
+                            Debug.Log("Error is: " + error);
+                        }
                         break;
                 }
             }
