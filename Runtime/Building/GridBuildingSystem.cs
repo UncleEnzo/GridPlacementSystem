@@ -555,6 +555,7 @@ namespace Nevelson.GridPlacementSystem
         {
             if (!_movingObject) return;
             Debug.Log("Deselecting object to move");
+            UndoSelectedTilesColors();
             DeselectBuildObject();
             UndoLastDemolish();
             _movingObject = false;
