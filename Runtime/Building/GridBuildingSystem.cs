@@ -707,7 +707,6 @@ namespace Nevelson.GridPlacementSystem
 
             _lastDemolishPlaceData = gridObject.PlacedObject.GetData();
             Debug.Log($"Placed object rotation is: {_lastDemolishPlaceData.Dir}");
-            placedObject.DestroySelf();
             List<Vector2Int> gridPositionList = placedObject.GetGridPositionList();
             foreach (Vector2Int gridPosition in gridPositionList)
             {
@@ -724,6 +723,8 @@ namespace Nevelson.GridPlacementSystem
             //remove it from the placed objects list
             int idx = _placedGridObjects.FindIndex(x => x.ID.Equals(_lastDemolishPlaceData.ID));
             _placedGridObjects.RemoveAt(idx);
+
+            placedObject.DestroySelf();
             return true;
         }
 
@@ -736,10 +737,12 @@ namespace Nevelson.GridPlacementSystem
             }
 
             Debug.Log("Undoing last demolish");
+            string placedObjectID = _lastDemolishPlaceData.ID;
             Vector2Int placedObjectOrigin = _lastDemolishPlaceData.Origin;
             GridPlacementObjectSO selectedGridObjectSO = _lastDemolishPlaceData.GridObjectSO;
             GridPlacementObjectSO.Dir dir = _lastDemolishPlaceData.Dir;
             ConstructionState constructionState = _lastDemolishPlaceData.ConstructionState;
+            _lastDemolishPlaceData = null;
 
             Vector2Int rotationOffset = selectedGridObjectSO.GetRotationOffset(dir);
             Vector3 placedObjectWorldPosition = _grid.GetWorldPosition(placedObjectOrigin.x, placedObjectOrigin.y) +
@@ -748,12 +751,12 @@ namespace Nevelson.GridPlacementSystem
             GridObject gridObject = _grid.GetGridObject(placedObjectOrigin.x, placedObjectOrigin.y);
             if (gridObject == null)
             {
-                Debug.LogError("Could nto find the grid object");
+                Debug.LogError("Could not find the grid object");
                 return;
             }
 
             PlacedObject placedObject = PlacedObject.Create(
-                _lastDemolishPlaceData.ID,
+                placedObjectID,
                 placedObjectWorldPosition,
                 placedObjectOrigin,
                 dir,
@@ -774,13 +777,12 @@ namespace Nevelson.GridPlacementSystem
 
             //update the placed list, don't need to send this info
             _placedGridObjects.Add(new PlacedGridObject(
-                _lastDemolishPlaceData.ID,
+                placedObjectID,
                 placedObject,
                 selectedGridObjectSO,
                 placedObjectOrigin,
                 _dir, constructionState));
             OnObjectPlaced?.Invoke(this, EventArgs.Empty);
-            _lastDemolishPlaceData = null;
         }
 
         bool Rotate(out string error)

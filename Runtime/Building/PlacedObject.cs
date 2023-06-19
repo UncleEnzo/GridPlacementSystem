@@ -88,6 +88,7 @@ namespace Nevelson.GridPlacementSystem
             placedObject.Setup(id, gridObjectSO, origin, dir, gridObject, constructionState, setConstructionState);
             return placedObject;
         }
+
         public PlacedObjectData GetData()
         {
             return new PlacedObjectData(
@@ -140,7 +141,7 @@ namespace Nevelson.GridPlacementSystem
 
         public void DestroySelf()
         {
-            Destroy(gameObject);
+            DestroyImmediate(gameObject);
         }
 
         public override string ToString()
