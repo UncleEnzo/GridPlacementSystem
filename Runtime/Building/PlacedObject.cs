@@ -27,7 +27,7 @@ namespace Nevelson.GridPlacementSystem
             {
                 if (_useContructionState)
                 {
-                    Debug.Log($"INSTANCE ID IS: {gameObject.GetInstanceID()}: RETURNING CONSTRUCTION STATE: {_useContructionState}");
+                    Debug.Log($"INSTANCE ID IS: {gameObject.GetInstanceID()}: RETURNING CONSTRUCTION STATE: {_constructionState}");
                     return _constructionState;
                 }
                 else
