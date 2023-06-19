@@ -72,6 +72,8 @@ namespace Nevelson.GridPlacementSystem
                 Quaternion.Euler(0, gridObjectSO.GetRotationAngle(dir), 0)
                 );
             PlacedObject placedObject = placedObjectTransform.GetComponent<PlacedObject>();
+
+            Debug.Log($"SET CONSTRUCTION STATE TO: {constructionState}");
             placedObject.Setup(id, gridObjectSO, origin, dir, gridObject, constructionState, setConstructionState);
             return placedObject;
         }
@@ -102,11 +104,17 @@ namespace Nevelson.GridPlacementSystem
             _gridObjectSO = placedObjectTypeSO;
             _origin = origin;
             _dir = dir;
+
+            Debug.Log($"Construction state is {constructionState}");
             _constructionState = _useContructionState ? constructionState : ConstructionState.NONE;
+
+            Debug.Log($"Internal construction state is {_constructionState}");
+
             _setConstructionState = setConstructionState;
             //determine the placed object's transparency based on construction state (Should probably be a callback handled by outside items
             if (ConstructionState == ConstructionState.CONSTRUCTION)
             {
+                Debug.Log("TRIGGERED THIS");
                 SpriteRenderer sp = GetComponentInChildren<SpriteRenderer>();
                 Color newColor = sp.color;
                 newColor.a = .6f;
