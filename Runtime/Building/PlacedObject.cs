@@ -23,7 +23,18 @@ namespace Nevelson.GridPlacementSystem
         public bool IsDestructable { get => _isDestructable; }
         public ConstructionState ConstructionState
         {
-            get => _useContructionState ? _constructionState : ConstructionState.NONE;
+            get
+            {
+                if (_useContructionState)
+                {
+                    Debug.Log($"INSTANCE ID IS: {gameObject.GetInstanceID()}: RETURNING CONSTRUCTION STATE: {_useContructionState}");
+                    return _constructionState;
+                }
+                else
+                {
+                    return ConstructionState.NONE;
+                }
+            }
         }
 
         public string ID
@@ -108,7 +119,7 @@ namespace Nevelson.GridPlacementSystem
             Debug.Log($"Construction state is {constructionState}");
             _constructionState = _useContructionState ? constructionState : ConstructionState.NONE;
 
-            Debug.Log($"Internal construction state is {_constructionState}");
+            Debug.Log($"INSTANCE ID IS: {gameObject.GetInstanceID()} Internal construction state is {_constructionState}");
 
             _setConstructionState = setConstructionState;
             //determine the placed object's transparency based on construction state (Should probably be a callback handled by outside items
