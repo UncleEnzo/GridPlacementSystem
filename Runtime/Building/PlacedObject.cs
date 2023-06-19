@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -16,7 +17,7 @@ namespace Nevelson.GridPlacementSystem
         GridPlacementObjectSO.Dir _dir;
         GridObject _gridObject;
         ConstructionState _constructionState = ConstructionState.CONSTRUCTION;
-        //Func<ConstructionState, GridObject, bool> _setConstructionState;
+        Func<string, ReloadBuildingData, PlacedGridObject> _reloadBuilding;
 
         public GridObject GridObject { get => _gridObject; }
 
@@ -24,18 +25,7 @@ namespace Nevelson.GridPlacementSystem
         public bool IsDestructable { get => _isDestructable; }
         public ConstructionState ConstructionState
         {
-            get
-            {
-                if (_useContructionState)
-                {
-                    Debug.Log($"INSTANCE ID IS: {gameObject.GetInstanceID()}: RETURNING CONSTRUCTION STATE: {_constructionState}");
-                    return _constructionState;
-                }
-                else
-                {
-                    return ConstructionState.NONE;
-                }
-            }
+            get => _useContructionState ? _constructionState : ConstructionState.NONE;
         }
 
         public string ID
@@ -48,25 +38,10 @@ namespace Nevelson.GridPlacementSystem
             get => _gridObjectSO;
         }
 
-        //public bool SetConstructionState(ConstructionState constructionState)
-        //{
-        //    if (!_useContructionState)
-        //    {
-        //        Debug.LogWarning("Can't update construction state because this placed object does not use construction state");
-        //        return false;
-        //    }
-        //    if (constructionState == ConstructionState)
-        //    {
-        //        Debug.LogWarning("Not updating construction state because Set state is equal to current state");
-        //        return false;
-        //    }
-        //    if (constructionState == ConstructionState.NONE)
-        //    {
-        //        Debug.LogWarning("Not updating construction state because cannot set to NONE");
-        //        return false;
-        //    }
-        //    return _setConstructionState(constructionState, _gridObject);
-        //}
+        public void ReloadBuilding(ReloadBuildingData reloadBuildingData)
+        {
+            _reloadBuilding(ID, reloadBuildingData);
+        }
 
         public static PlacedObject Create(
             string id,
@@ -75,9 +50,8 @@ namespace Nevelson.GridPlacementSystem
             GridPlacementObjectSO.Dir dir,
             GridPlacementObjectSO gridObjectSO,
             GridObject gridObject,
-            ConstructionState constructionState)
-        //,
-        //Func<ConstructionState, GridObject, bool> setConstructionState)
+            ConstructionState constructionState,
+            Func<string, ReloadBuildingData, PlacedGridObject> reloadBuilding)
         {
             Transform placedObjectTransform = Instantiate(
                 gridObjectSO.prefab,
@@ -85,10 +59,7 @@ namespace Nevelson.GridPlacementSystem
                 Quaternion.Euler(0, gridObjectSO.GetRotationAngle(dir), 0)
                 );
             PlacedObject placedObject = placedObjectTransform.GetComponent<PlacedObject>();
-
-            Debug.Log($"SET CONSTRUCTION STATE TO: {constructionState}");
-            placedObject.Setup(id, gridObjectSO, origin, dir, gridObject, constructionState);
-            //, setConstructionState);
+            placedObject.Setup(id, gridObjectSO, origin, dir, gridObject, constructionState, reloadBuilding);
             return placedObject;
         }
 
@@ -111,27 +82,20 @@ namespace Nevelson.GridPlacementSystem
             Vector2Int origin,
             GridPlacementObjectSO.Dir dir,
             GridObject gridObject,
-            ConstructionState constructionState)
-        //,
-        //Func<ConstructionState, GridObject, bool> setConstructionState)
+            ConstructionState constructionState,
+            Func<string, ReloadBuildingData, PlacedGridObject> reloadBuilding)
         {
             _id = id;
             _gridObject = gridObject;
             _gridObjectSO = placedObjectTypeSO;
             _origin = origin;
             _dir = dir;
-
-            Debug.Log($"Construction state is {constructionState}");
             _constructionState = _useContructionState ? constructionState : ConstructionState.NONE;
-
-            Debug.Log($"INSTANCE ID IS: {gameObject.GetInstanceID()} Internal construction state is {_constructionState}");
-
-            //_setConstructionState = setConstructionState;
+            _reloadBuilding = reloadBuilding;
 
             //determine the placed object's transparency based on construction state (Should probably be a callback handled by outside items
             if (ConstructionState == ConstructionState.CONSTRUCTION)
             {
-                Debug.Log("TRIGGERED THIS");
                 SpriteRenderer sp = GetComponentInChildren<SpriteRenderer>();
                 Color newColor = sp.color;
                 newColor.a = .6f;
@@ -146,7 +110,7 @@ namespace Nevelson.GridPlacementSystem
 
         public void DestroySelf()
         {
-            DestroyImmediate(gameObject);
+            Destroy(gameObject);
         }
 
         public override string ToString()
