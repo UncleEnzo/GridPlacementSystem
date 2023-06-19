@@ -400,7 +400,6 @@ namespace Nevelson.GridPlacementSystem
 
             _lastDemolishPlaceData.ConstructionState = constructionState;
             UndoLastDemolish();
-            Debug.Log($"Set Construction state to: {_lastDemolishPlaceData.ConstructionState}");
             _OnGridUpdate?.Invoke(_placedGridObjects);
 
             //Calling this again to HIDE tiles
