@@ -43,24 +43,24 @@ namespace Nevelson.GridPlacementSystem
                 var placedObj = GBS.GetPlacedObjectAtMousePos();
                 if (placedObj != null)
                 {
-                    if (placedObj.ConstructionState == ConstructionState.CONSTRUCTION)
-                    {
-                        Debug.Log("Setting Construction state to built");
-                        bool ok = placedObj.SetConstructionState(ConstructionState.BUILT);
-                        if (!ok)
-                        {
-                            Debug.LogError("FAILED");
-                        }
-                    }
-                    else
-                    {
-                        Debug.Log("Setting Construction state to CONSTRUCTION");
-                        bool ok = placedObj.SetConstructionState(ConstructionState.CONSTRUCTION);
-                        if (!ok)
-                        {
-                            Debug.LogError("FAILED");
-                        }
-                    }
+                    //if (placedObj.ConstructionState == ConstructionState.CONSTRUCTION)
+                    //{
+                    //    Debug.Log("Setting Construction state to built");
+                    //    bool ok = placedObj.SetConstructionState(ConstructionState.BUILT);
+                    //    if (!ok)
+                    //    {
+                    //        Debug.LogError("FAILED");
+                    //    }
+                    //}
+                    //else
+                    //{
+                    //    Debug.Log("Setting Construction state to CONSTRUCTION");
+                    //    bool ok = placedObj.SetConstructionState(ConstructionState.CONSTRUCTION);
+                    //    if (!ok)
+                    //    {
+                    //        Debug.LogError("FAILED");
+                    //    }
+                    //}
 
                 }
                 else

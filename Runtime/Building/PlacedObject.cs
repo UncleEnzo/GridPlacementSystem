@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -17,7 +16,9 @@ namespace Nevelson.GridPlacementSystem
         GridPlacementObjectSO.Dir _dir;
         GridObject _gridObject;
         ConstructionState _constructionState = ConstructionState.CONSTRUCTION;
-        Func<ConstructionState, GridObject, bool> _setConstructionState;
+        //Func<ConstructionState, GridObject, bool> _setConstructionState;
+
+        public GridObject GridObject { get => _gridObject; }
 
         public bool IsMovable { get => _isMovable; }
         public bool IsDestructable { get => _isDestructable; }
@@ -47,25 +48,25 @@ namespace Nevelson.GridPlacementSystem
             get => _gridObjectSO;
         }
 
-        public bool SetConstructionState(ConstructionState constructionState)
-        {
-            if (!_useContructionState)
-            {
-                Debug.LogWarning("Can't update construction state because this placed object does not use construction state");
-                return false;
-            }
-            if (constructionState == ConstructionState)
-            {
-                Debug.LogWarning("Not updating construction state because Set state is equal to current state");
-                return false;
-            }
-            if (constructionState == ConstructionState.NONE)
-            {
-                Debug.LogWarning("Not updating construction state because cannot set to NONE");
-                return false;
-            }
-            return _setConstructionState(constructionState, _gridObject);
-        }
+        //public bool SetConstructionState(ConstructionState constructionState)
+        //{
+        //    if (!_useContructionState)
+        //    {
+        //        Debug.LogWarning("Can't update construction state because this placed object does not use construction state");
+        //        return false;
+        //    }
+        //    if (constructionState == ConstructionState)
+        //    {
+        //        Debug.LogWarning("Not updating construction state because Set state is equal to current state");
+        //        return false;
+        //    }
+        //    if (constructionState == ConstructionState.NONE)
+        //    {
+        //        Debug.LogWarning("Not updating construction state because cannot set to NONE");
+        //        return false;
+        //    }
+        //    return _setConstructionState(constructionState, _gridObject);
+        //}
 
         public static PlacedObject Create(
             string id,
@@ -74,8 +75,9 @@ namespace Nevelson.GridPlacementSystem
             GridPlacementObjectSO.Dir dir,
             GridPlacementObjectSO gridObjectSO,
             GridObject gridObject,
-            ConstructionState constructionState,
-            Func<ConstructionState, GridObject, bool> setConstructionState)
+            ConstructionState constructionState)
+        //,
+        //Func<ConstructionState, GridObject, bool> setConstructionState)
         {
             Transform placedObjectTransform = Instantiate(
                 gridObjectSO.prefab,
@@ -85,7 +87,8 @@ namespace Nevelson.GridPlacementSystem
             PlacedObject placedObject = placedObjectTransform.GetComponent<PlacedObject>();
 
             Debug.Log($"SET CONSTRUCTION STATE TO: {constructionState}");
-            placedObject.Setup(id, gridObjectSO, origin, dir, gridObject, constructionState, setConstructionState);
+            placedObject.Setup(id, gridObjectSO, origin, dir, gridObject, constructionState);
+            //, setConstructionState);
             return placedObject;
         }
 
@@ -108,8 +111,9 @@ namespace Nevelson.GridPlacementSystem
             Vector2Int origin,
             GridPlacementObjectSO.Dir dir,
             GridObject gridObject,
-            ConstructionState constructionState,
-            Func<ConstructionState, GridObject, bool> setConstructionState)
+            ConstructionState constructionState)
+        //,
+        //Func<ConstructionState, GridObject, bool> setConstructionState)
         {
             _id = id;
             _gridObject = gridObject;
@@ -122,7 +126,8 @@ namespace Nevelson.GridPlacementSystem
 
             Debug.Log($"INSTANCE ID IS: {gameObject.GetInstanceID()} Internal construction state is {_constructionState}");
 
-            _setConstructionState = setConstructionState;
+            //_setConstructionState = setConstructionState;
+
             //determine the placed object's transparency based on construction state (Should probably be a callback handled by outside items
             if (ConstructionState == ConstructionState.CONSTRUCTION)
             {

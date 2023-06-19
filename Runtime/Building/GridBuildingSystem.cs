@@ -348,6 +348,43 @@ namespace Nevelson.GridPlacementSystem
 
         #endregion
 
+
+        public class ReloadBuilding : EventArgs
+        {
+            public string BuildingID;
+            public ConstructionState ConstructionState;
+        }
+        public static event EventHandler<ReloadBuilding> On_ReloadBuilding;
+
+        //ConstructionState constructionState, GridObject gridObject
+        void SetNewBuildingState(object sender, ReloadBuilding reloadBuilding)
+        {
+            PlacedGridObject placedGridObject = _placedGridObjects.Find(x => x.ID.Equals(reloadBuilding.BuildingID));
+            if (placedGridObject == null)
+            {
+                Debug.LogError("ERROR");
+                return;
+            }
+
+            //NEW ABOVE
+
+
+            //not doing verify cause we want this done even on NON displayed grids
+            if (!Demolish(true, placedGridObject.PlacedObject.GridObject, out string error))
+            {
+                Debug.Log(error);
+                return;
+            }
+
+            _lastDemolishPlaceData.ConstructionState = reloadBuilding.ConstructionState;
+            UndoLastDemolish();
+            _OnGridUpdate?.Invoke(_placedGridObjects);
+
+            //Calling this again to HIDE tiles
+            ShowOrHideGridTiles();
+            return;
+        }
+
         void Start()
         {
             Debug.Log($"Starting grid:\n" +
@@ -382,29 +419,13 @@ namespace Nevelson.GridPlacementSystem
             CreateBuildingGhost();
             PreInstantiateGridObjects(_preInitGridObjects);
             DisplayGrid(_displayGridOnStart);
+
+            On_ReloadBuilding += SetNewBuildingState;
         }
 
         void OnApplicationQuit()
         {
             DisplayGrid(false);
-        }
-
-        bool SetNewBuildingState(ConstructionState constructionState, GridObject gridObject)
-        {
-            //not doing verify cause we want this done even on NON displayed grids
-            if (!Demolish(true, gridObject, out string error))
-            {
-                Debug.Log(error);
-                return false;
-            }
-
-            _lastDemolishPlaceData.ConstructionState = constructionState;
-            UndoLastDemolish();
-            _OnGridUpdate?.Invoke(_placedGridObjects);
-
-            //Calling this again to HIDE tiles
-            ShowOrHideGridTiles();
-            return true;
         }
 
         void PreInstantiateGridObjects(List<PreInitObject> preInitObject)
@@ -459,8 +480,7 @@ namespace Nevelson.GridPlacementSystem
                     preInitObject.Dir,
                     preInitObject.GridObject,
                     gridObject,
-                    preInitObject.ConstructionState,
-                    SetNewBuildingState);
+                    preInitObject.ConstructionState);
 
                 //this rotates the sprite a bit more for 2D
                 placedObject.transform.rotation = Quaternion.Euler(0, 0, -preInitObject.GridObject.GetRotationAngle(preInitObject.Dir));
@@ -653,8 +673,9 @@ namespace Nevelson.GridPlacementSystem
                 _dir,
                 gridPlacementObject,
                 gridObject,
-                constructionState,
-                SetNewBuildingState);
+                constructionState);
+            //,
+            //    SetNewBuildingState);
 
             //this rotates the sprite a bit more for 2D
             placedObject.transform.rotation = Quaternion.Euler(0, 0, -gridPlacementObject.GetRotationAngle(_dir));
@@ -762,8 +783,9 @@ namespace Nevelson.GridPlacementSystem
                 dir,
                 selectedGridObjectSO,
                 gridObject,
-                constructionState,
-                SetNewBuildingState);
+                constructionState);
+            //,
+            //SetNewBuildingState);
 
             //this rotates the sprite a bit more for 2D
             placedObject.transform.rotation = Quaternion.Euler(0, 0, -selectedGridObjectSO.GetRotationAngle(dir));
