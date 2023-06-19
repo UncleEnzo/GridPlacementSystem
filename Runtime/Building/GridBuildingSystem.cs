@@ -356,13 +356,13 @@ namespace Nevelson.GridPlacementSystem
         //}
 
         //ConstructionState constructionState, GridObject gridObject
-        public void ReloadBuilding(string id, ConstructionState constructionState)
+        public PlacedGridObject ReloadBuilding(string id, ConstructionState constructionState)
         {
             PlacedGridObject placedGridObject = _placedGridObjects.Find(x => x.ID.Equals(id));
             if (placedGridObject == null)
             {
                 Debug.LogError("ERROR");
-                return;
+                return null;
             }
 
             //NEW ABOVE
@@ -372,16 +372,16 @@ namespace Nevelson.GridPlacementSystem
             if (!Demolish(true, placedGridObject.PlacedObject.GridObject, out string error))
             {
                 Debug.Log(error);
-                return;
+                return null;
             }
 
             _lastDemolishPlaceData.ConstructionState = constructionState;
-            UndoLastDemolish();
+            PlacedGridObject newPlacedGridObject = UndoLastDemolish();
             _OnGridUpdate?.Invoke(_placedGridObjects);
 
             //Calling this again to HIDE tiles
             ShowOrHideGridTiles();
-            return;
+            return newPlacedGridObject;
         }
 
         void Start()
@@ -746,12 +746,12 @@ namespace Nevelson.GridPlacementSystem
             return true;
         }
 
-        void UndoLastDemolish()
+        PlacedGridObject UndoLastDemolish()
         {
             if (_lastDemolishPlaceData == null)
             {
                 Debug.Log("No last demolish found");
-                return;
+                return null;
             }
 
             Debug.Log("Undoing last demolish");
@@ -770,7 +770,7 @@ namespace Nevelson.GridPlacementSystem
             if (gridObject == null)
             {
                 Debug.LogError("Could not find the grid object");
-                return;
+                return null;
             }
 
             PlacedObject placedObject = PlacedObject.Create(
@@ -795,13 +795,15 @@ namespace Nevelson.GridPlacementSystem
             }
 
             //update the placed list, don't need to send this info
-            _placedGridObjects.Add(new PlacedGridObject(
+            PlacedGridObject placedGridObject = new PlacedGridObject(
                 placedObjectID,
                 placedObject,
                 selectedGridObjectSO,
                 placedObjectOrigin,
-                _dir, constructionState));
+                _dir, constructionState);
+            _placedGridObjects.Add(placedGridObject);
             OnObjectPlaced?.Invoke(this, EventArgs.Empty);
+            return placedGridObject;
         }
 
         bool Rotate(out string error)
