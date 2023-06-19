@@ -349,17 +349,16 @@ namespace Nevelson.GridPlacementSystem
         #endregion
 
 
-        public class ReloadBuilding : EventArgs
-        {
-            public string BuildingID;
-            public ConstructionState ConstructionState;
-        }
-        public static event EventHandler<ReloadBuilding> On_ReloadBuilding;
+        //public class ReloadBuilding : EventArgs
+        //{
+        //    public string BuildingID;
+        //    public ConstructionState ConstructionState;
+        //}
 
         //ConstructionState constructionState, GridObject gridObject
-        void SetNewBuildingState(object sender, ReloadBuilding reloadBuilding)
+        public void ReloadBuilding(string id, ConstructionState constructionState)
         {
-            PlacedGridObject placedGridObject = _placedGridObjects.Find(x => x.ID.Equals(reloadBuilding.BuildingID));
+            PlacedGridObject placedGridObject = _placedGridObjects.Find(x => x.ID.Equals(id));
             if (placedGridObject == null)
             {
                 Debug.LogError("ERROR");
@@ -376,7 +375,7 @@ namespace Nevelson.GridPlacementSystem
                 return;
             }
 
-            _lastDemolishPlaceData.ConstructionState = reloadBuilding.ConstructionState;
+            _lastDemolishPlaceData.ConstructionState = constructionState;
             UndoLastDemolish();
             _OnGridUpdate?.Invoke(_placedGridObjects);
 
@@ -419,8 +418,6 @@ namespace Nevelson.GridPlacementSystem
             CreateBuildingGhost();
             PreInstantiateGridObjects(_preInitGridObjects);
             DisplayGrid(_displayGridOnStart);
-
-            On_ReloadBuilding += SetNewBuildingState;
         }
 
         void OnApplicationQuit()
