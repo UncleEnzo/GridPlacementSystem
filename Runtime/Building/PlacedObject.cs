@@ -38,9 +38,9 @@ namespace Nevelson.GridPlacementSystem
             get => _gridObjectSO;
         }
 
-        public void ReloadBuilding(ReloadBuildingData reloadBuildingData)
+        public PlacedGridObject ReloadBuilding(ReloadBuildingData reloadBuildingData)
         {
-            _reloadBuilding(ID, reloadBuildingData);
+            return _reloadBuilding(ID, reloadBuildingData);
         }
 
         public static PlacedObject Create(
