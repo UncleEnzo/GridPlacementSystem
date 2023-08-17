@@ -81,9 +81,9 @@ namespace Nevelson.GridPlacementSystem
 
                     //I THINK IT'S ALL GOOD, BUT THE BUG IS WE'RE NOT GETTING THE RIGHT ONE
 
-                    Debug.Log($"ORIGIN IS: {gridObj.PlacedObject.Origin}");
-
-                    targetPosition = new Vector3(gridObj.PlacedObject.Origin.x, gridObj.PlacedObject.Origin.y);
+                    Debug.Log($"ORIGIN IN GHOST {gridObj.PlacedObject.Origin}");
+                    targetPosition = _grid.GetWorldPosition(gridObj.PlacedObject.Origin);
+                    //targetPosition = new Vector3(gridObj.PlacedObject.Origin.x, gridObj.PlacedObject.Origin.y);
                 }
                 else
                 {

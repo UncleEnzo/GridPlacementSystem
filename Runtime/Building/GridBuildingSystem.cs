@@ -1007,6 +1007,7 @@ namespace Nevelson.GridPlacementSystem
                 {
                     //NOTE: if the dimensions of _selectedGridObjectSO and the upgrading object are not == then we have a problem
                     List<Vector2Int> gridPositionList = _selectedGridObjectSO.GetGridPositionList(gridObj.PlacedObject.Origin, _dir);
+                    Debug.Log($"ORIGIN IN CHECK {gridObj.PlacedObject.Origin}");
                     foreach (Vector2Int gridPosition in gridPositionList)
                     {
                         GridObject gridObjRelativeToOtherBuilding = _grid.GetGridObject(gridPosition);
