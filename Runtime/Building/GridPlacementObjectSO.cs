@@ -31,6 +31,8 @@ namespace Nevelson.GridPlacementSystem
         public Transform ghost;
         public int width;
         public int height;
+        [Header("If you add an Grid Placement Object SO, this will ONLY upgrade an existing version of the UpgradeFrom Building")]
+        public GridPlacementObjectSO UpgradeFrom;
 
         public bool IsRotatable = true;
 

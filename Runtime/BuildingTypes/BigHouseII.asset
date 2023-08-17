@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c01229f3ad9b00043ba3b9eb8f95fb75, type: 3}
+  m_Name: BigHouseII
+  m_EditorClassIdentifier: 
+  nameString: BH2
+  prefab: {fileID: 9179346414099677398, guid: 396af33e4e8da73488a40594f2f96e97, type: 3}
+  ghost: {fileID: 9179346414099677398, guid: 459e82637787d0348b1acaf1abb87604, type: 3}
+  width: 7
+  height: 8
+  UpgradeFrom: {fileID: 11400000, guid: 9c80bccf972bbe64c97e6da81a8f11a0, type: 2}
+  IsRotatable: 1
+  maxPlaced: 1

@@ -40,7 +40,7 @@ namespace Nevelson.GridPlacementSystem
             {
                 for (int y = 0; y < _gridArray.GetLength(1); y++)
                 {
-                    if (IsIgnoredTile(x, y, ignoredTilesRanges)) continue;
+                    if (IsIgnoredTile(new Vector2Int(x, y), ignoredTilesRanges)) continue;
                     _gridArray[x, y] = createGridObject(this, x, y);
                 }
             }
@@ -53,31 +53,33 @@ namespace Nevelson.GridPlacementSystem
                 {
                     for (int y = 0; y < _gridArray.GetLength(1); y++)
                     {
-                        if (IsIgnoredTile(x, y, ignoredTilesRanges)) continue;
+                        Vector2Int xy = new Vector2Int(x, y);
+                        if (IsIgnoredTile(xy, ignoredTilesRanges)) continue;
                         var pos = new Vector3(x, y) * _cellSize;
                         debugTextArray[x, y] = StaticFactory.CreateWorldText(
                          transform,
                         $"{x},{y}",
-                         GetWorldPosition(x, y) + (new Vector3(cellSize, cellSize, 0) * .5f), //centers the textmesh
+                         GetWorldPosition(xy) + (new Vector3(cellSize, cellSize, 0) * .5f), //centers the textmesh
                          4,
                          Color.white);
                         Debug.DrawLine(
-                            GetWorldPosition(x, y),
-                            GetWorldPosition(x, y + 1),
+                            GetWorldPosition(xy),
+                            GetWorldPosition(xy + Vector2Int.up),
                             Color.white, 1000f);
                         Debug.DrawLine(
-                            GetWorldPosition(x, y),
-                            GetWorldPosition(x + 1, y),
+                            GetWorldPosition(xy),
+                            GetWorldPosition(xy + Vector2Int.right),
                             Color.white, 1000f);
                     }
                 }
+
                 Debug.DrawLine(
-                    GetWorldPosition(0, height),
-                    GetWorldPosition(width, height),
+                    GetWorldPosition(new Vector2Int(0, height)),
+                    GetWorldPosition(new Vector2Int(width, height)),
                     Color.white, 1000f);
                 Debug.DrawLine(
-                    GetWorldPosition(width, 0),
-                    GetWorldPosition(width, height),
+                    GetWorldPosition(new Vector2Int(width, 0)),
+                    GetWorldPosition(new Vector2Int(width, height)),
                     Color.white, 1000f);
 
                 OnGridValueChanged += (object sender, OnGridValueChangedEventArgs eventArgs) =>
@@ -91,9 +93,8 @@ namespace Nevelson.GridPlacementSystem
 
         public void SetGridObject(Vector3 worldPosition, TGridObject value)
         {
-            int x, y;
-            GetXY(worldPosition, out x, out y);
-            SetGridObject(x, y, value);
+            Vector2Int v = GetXY(worldPosition);
+            SetGridObject(v.x, v.y, value);
         }
 
         public void SetGridObject(int x, int y, TGridObject value)
@@ -112,34 +113,34 @@ namespace Nevelson.GridPlacementSystem
 
         public TGridObject GetGridObject(Vector3 worldPosition)
         {
-            int x, y;
-            GetXY(worldPosition, out x, out y);
-            return GetGridObject(x, y);
+            Vector2Int xy = GetXY(worldPosition);
+            return GetGridObject(xy);
         }
 
-        public TGridObject GetGridObject(int x, int y)
+        public TGridObject GetGridObject(Vector2Int gridPos)
         {
-            if (x < 0 || y < 0) return default;
-            if (x >= _width || y >= _height) return default;
-            return _gridArray[x, y];
+            if (gridPos.x < 0 || gridPos.y < 0) return default;
+            if (gridPos.x >= _width || gridPos.y >= _height) return default;
+            return _gridArray[gridPos.x, gridPos.y];
         }
 
-        public void GetXY(Vector3 worldPosition, out int x, out int y)
+        public Vector2Int GetXY(Vector3 worldPosition)
         {
-            x = Mathf.FloorToInt((worldPosition - _transform.position).x / _cellSize);
-            y = Mathf.FloorToInt((worldPosition - _transform.position).y / _cellSize);
+            int x = Mathf.FloorToInt((worldPosition - _transform.position).x / _cellSize);
+            int y = Mathf.FloorToInt((worldPosition - _transform.position).y / _cellSize);
+            return new Vector2Int(x, y);
         }
 
-        public Vector3 GetWorldPosition(int x, int y)
+        public Vector3 GetWorldPosition(Vector2Int worldPos)
         {
-            return new Vector3(x, y) * _cellSize + _transform.position;
+            return new Vector3(worldPos.x, worldPos.y) * _cellSize + _transform.position;
         }
 
-        bool IsIgnoredTile(int x, int y, Vector2IntRanges[] ignoredTilesRanges)
+        bool IsIgnoredTile(Vector2Int pos, Vector2IntRanges[] ignoredTilesRanges)
         {
             foreach (var vectorRange in ignoredTilesRanges)
             {
-                if (vectorRange.IsBetweenRange(x, y)) return true;
+                if (vectorRange.IsBetweenRange(pos.x, pos.y)) return true;
             }
             return false;
         }

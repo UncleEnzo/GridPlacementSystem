@@ -118,8 +118,8 @@ namespace Nevelson.GridPlacementSystem
 
         public PlacedObject GetPlacedObjectAtMousePos()
         {
-            _grid.GetXY(GetMouseWorldPosition(), out int x, out int y);
-            GridObject gridObject = _grid.GetGridObject(x, y);
+            Vector2Int xy = _grid.GetXY(GetMouseWorldPosition());
+            GridObject gridObject = _grid.GetGridObject(xy);
             if (gridObject == null) return null;
             if (gridObject.PlacedObject == null) return null;
             return gridObject.PlacedObject;
@@ -197,6 +197,7 @@ namespace Nevelson.GridPlacementSystem
                 ConstructionState.CONSTRUCTION,
                 out PlacedGridObject placedGridObject,
                 out error);
+
             if (!ok)
             {
                 Debug.Log($"Could not build {_selectedGridObjectSO.name} at location.");
@@ -397,13 +398,12 @@ namespace Nevelson.GridPlacementSystem
         {
             bool CheckSurroundingSpaceAtPos(Vector2Int tilePosWithTransOffset, Vector2 tilePosDebug, PreInitObject preInitObject)
             {
-                _grid.GetXY((Vector2)tilePosWithTransOffset, out int x, out int y);
-                Vector2Int placedObjectOrigin = new Vector2Int(x, y);
+                Vector2Int placedObjectOrigin = _grid.GetXY((Vector2)tilePosWithTransOffset);
                 List<Vector2Int> gridPositionList = preInitObject.GridObject.GetGridPositionList(placedObjectOrigin, preInitObject.Dir);
                 foreach (Vector2Int gridPosition in gridPositionList)
                 {
                     //if the surrounding tile is outside grid bounds or can't build
-                    GridObject gridObj = _grid.GetGridObject(gridPosition.x, gridPosition.y);
+                    GridObject gridObj = _grid.GetGridObject(gridPosition);
                     if (gridObj == null || !gridObj.CanBuild())
                     {
                         Debug.LogError($"Couldn't pre-init {preInitObject.GridObject.prefab.name} at global position: {tilePosWithTransOffset} / Tile position: {tilePosDebug} because something is already occupying that space");
@@ -425,13 +425,12 @@ namespace Nevelson.GridPlacementSystem
                     return false;
                 }
 
-                _grid.GetXY((Vector2)tilePosWithTransOffset, out int x, out int y);
-                Vector2Int placedObjectOrigin = new Vector2Int(x, y);
+                Vector2Int placedObjectOrigin = _grid.GetXY((Vector2)tilePosWithTransOffset);
                 Vector2Int rotationOffset = preInitObject.GridObject.GetRotationOffset(preInitObject.Dir);
-                Vector3 placedObjectWorldPosition = _grid.GetWorldPosition(x, y) +
+                Vector3 placedObjectWorldPosition = _grid.GetWorldPosition(placedObjectOrigin) +
                     new Vector3(rotationOffset.x, rotationOffset.y) * _grid.CellSize;
 
-                GridObject gridObject = _grid.GetGridObject(x, y);
+                GridObject gridObject = _grid.GetGridObject(placedObjectOrigin);
                 if (gridObject == null)
                 {
                     Debug.LogError("Could not find gridobject");
@@ -455,7 +454,7 @@ namespace Nevelson.GridPlacementSystem
                 List<Vector2Int> gridPositionList = preInitObject.GridObject.GetGridPositionList(placedObjectOrigin, preInitObject.Dir);
                 foreach (Vector2Int gridPosition in gridPositionList)
                 {
-                    _grid.GetGridObject(gridPosition.x, gridPosition.y).SetPlacedObject(placedObject);
+                    _grid.GetGridObject(gridPosition).SetPlacedObject(placedObject);
                 }
 
                 preInitedPlacedObject = new PlacedGridObject(
@@ -503,8 +502,8 @@ namespace Nevelson.GridPlacementSystem
                 error = "Already moving an object";
                 return false;
             }
-            _grid.GetXY(GetMouseWorldPosition(), out int x, out int y);
-            GridObject gridObject = _grid.GetGridObject(x, y);
+            Vector2Int xy = _grid.GetXY(GetMouseWorldPosition());
+            GridObject gridObject = _grid.GetGridObject(xy);
             if (gridObject == null || gridObject.PlacedObject == null)
             {
                 error = "No object to move";
@@ -588,27 +587,27 @@ namespace Nevelson.GridPlacementSystem
         bool Build(
             string id,
             AudioClip soundEffect,
-            GridPlacementObjectSO gridPlacementObject,
+            GridPlacementObjectSO gridPlacementObjectSO,
             ConstructionState constructionState,
             out PlacedGridObject placedGridObject,
             out string error)
         {
             error = "";
             placedGridObject = null;
-            if (gridPlacementObject == null)
+            if (gridPlacementObjectSO == null)
             {
                 error = "No object to build";
                 return false;
             }
 
-            if (!CheckSurroundingSpace(gridPlacementObject))
+            if (!CheckSurroundingSpace(gridPlacementObjectSO))
             {
                 error = "Space is occupied";
                 Debug.Log(error);
                 return false;
             }
 
-            if (!CheckIfMaxOfObjectPlaced(gridPlacementObject))
+            if (!CheckIfMaxOfObjectPlaced(gridPlacementObjectSO))
             {
                 error = "Can't place any more of this object";
                 Debug.Log(error);
@@ -618,13 +617,12 @@ namespace Nevelson.GridPlacementSystem
             UndoMoveDemolishTilesColors();
             UndoSelectedTilesColors();
 
-            _grid.GetXY(GetMouseWorldPosition(), out int x, out int y);
-            Vector2Int placedObjectOrigin = new Vector2Int(x, y);
-            Vector2Int rotationOffset = gridPlacementObject.GetRotationOffset(_dir);
-            Vector3 placedObjectWorldPosition = _grid.GetWorldPosition(x, y) +
+            Vector2Int placedObjectOrigin = _grid.GetXY(GetMouseWorldPosition());
+            Vector2Int rotationOffset = gridPlacementObjectSO.GetRotationOffset(_dir);
+            Vector3 placedObjectWorldPosition = _grid.GetWorldPosition(placedObjectOrigin) +
                 new Vector3(rotationOffset.x, rotationOffset.y) * _grid.CellSize;
 
-            GridObject gridObject = _grid.GetGridObject(x, y);
+            GridObject gridObject = _grid.GetGridObject(placedObjectOrigin);
             if (gridObject == null)
             {
                 error = "Could not find gridobject";
@@ -637,19 +635,19 @@ namespace Nevelson.GridPlacementSystem
                 placedObjectWorldPosition,
                 placedObjectOrigin,
                 _dir,
-                gridPlacementObject,
+                gridPlacementObjectSO,
                 gridObject,
                 constructionState,
                 ReloadBuilding);
 
             //this rotates the sprite a bit more for 2D
-            placedObject.transform.rotation = Quaternion.Euler(0, 0, -gridPlacementObject.GetRotationAngle(_dir));
+            placedObject.transform.rotation = Quaternion.Euler(0, 0, -gridPlacementObjectSO.GetRotationAngle(_dir));
 
             //populate other tiles that take up the dimensions of the object with info that they are taken
-            List<Vector2Int> gridPositionList = gridPlacementObject.GetGridPositionList(placedObjectOrigin, _dir);
+            List<Vector2Int> gridPositionList = gridPlacementObjectSO.GetGridPositionList(placedObjectOrigin, _dir);
             foreach (Vector2Int gridPosition in gridPositionList)
             {
-                _grid.GetGridObject(gridPosition.x, gridPosition.y).SetPlacedObject(placedObject);
+                _grid.GetGridObject(gridPosition).SetPlacedObject(placedObject);
             }
 
             //Play build sound
@@ -659,7 +657,7 @@ namespace Nevelson.GridPlacementSystem
             placedGridObject = new PlacedGridObject(
                 id,
                 placedObject,
-                gridPlacementObject,
+                gridPlacementObjectSO,
                 placedObjectOrigin,
                 _dir,
                 constructionState);
@@ -696,7 +694,7 @@ namespace Nevelson.GridPlacementSystem
             List<Vector2Int> gridPositionList = placedObject.GetGridPositionList();
             foreach (Vector2Int gridPosition in gridPositionList)
             {
-                _grid.GetGridObject(gridPosition.x, gridPosition.y).ClearPlacedObject();
+                _grid.GetGridObject(gridPosition).ClearPlacedObject();
             }
 
             if (!isMoveDemolish)
@@ -731,10 +729,10 @@ namespace Nevelson.GridPlacementSystem
             _lastDemolishPlaceData = null;
 
             Vector2Int rotationOffset = selectedGridObjectSO.GetRotationOffset(dir);
-            Vector3 placedObjectWorldPosition = _grid.GetWorldPosition(placedObjectOrigin.x, placedObjectOrigin.y) +
+            Vector3 placedObjectWorldPosition = _grid.GetWorldPosition(placedObjectOrigin) +
                 new Vector3(rotationOffset.x, rotationOffset.y) * _grid.CellSize;
 
-            GridObject gridObject = _grid.GetGridObject(placedObjectOrigin.x, placedObjectOrigin.y);
+            GridObject gridObject = _grid.GetGridObject(placedObjectOrigin);
             if (gridObject == null)
             {
                 Debug.LogError("Could not find the grid object");
@@ -758,7 +756,7 @@ namespace Nevelson.GridPlacementSystem
             List<Vector2Int> gridPositionList = selectedGridObjectSO.GetGridPositionList(placedObjectOrigin, dir);
             foreach (Vector2Int gridPosition in gridPositionList)
             {
-                _grid.GetGridObject(gridPosition.x, gridPosition.y).SetPlacedObject(placedObject);
+                _grid.GetGridObject(gridPosition).SetPlacedObject(placedObject);
             }
 
             //update the placed list, don't need to send this info
@@ -910,7 +908,7 @@ namespace Nevelson.GridPlacementSystem
                 List<Vector2Int> gridPosList = placedObject.GetGridPositionList();
                 foreach (Vector2Int gridPosition in gridPosList)
                 {
-                    GridObject gridObj = _grid.GetGridObject(gridPosition.x, gridPosition.y);
+                    GridObject gridObj = _grid.GetGridObject(gridPosition);
                     gridObj.SetCannotBuildColor();
                     previousMoveDemolishTiles.Add(gridObj);
                 }
@@ -922,7 +920,7 @@ namespace Nevelson.GridPlacementSystem
                 List<Vector2Int> gridPosList = placedObject.GetGridPositionList();
                 foreach (Vector2Int gridPosition in gridPosList)
                 {
-                    GridObject gridObj = _grid.GetGridObject(gridPosition.x, gridPosition.y);
+                    GridObject gridObj = _grid.GetGridObject(gridPosition);
                     gridObj.SetCannotBuildColor();
                     previousMoveDemolishTiles.Add(gridObj);
                 }
@@ -932,7 +930,7 @@ namespace Nevelson.GridPlacementSystem
             List<Vector2Int> gridPositionList = placedObject.GetGridPositionList();
             foreach (Vector2Int gridPosition in gridPositionList)
             {
-                GridObject gridObj = _grid.GetGridObject(gridPosition.x, gridPosition.y);
+                GridObject gridObj = _grid.GetGridObject(gridPosition);
                 gridObj.SetCanMoveOrDestroyColor();
                 previousMoveDemolishTiles.Add(gridObj);
             }
@@ -941,15 +939,14 @@ namespace Nevelson.GridPlacementSystem
         void UpdateSurroundingTileColors()
         {
             //set colors
-            _grid.GetXY(GetMouseWorldPosition(), out int x, out int y);
-            Vector2Int origin = new Vector2Int(x, y);
+            Vector2Int origin = _grid.GetXY(GetMouseWorldPosition());
             List<Vector2Int> gridPositionList = _selectedGridObjectSO.GetGridPositionList(origin, _dir);
             List<GridObject> newTiles = new List<GridObject>();
             if (CheckSurroundingSpace(_selectedGridObjectSO))
             {
                 foreach (Vector2Int gridPosition in gridPositionList)
                 {
-                    GridObject gridObj = _grid.GetGridObject(gridPosition.x, gridPosition.y);
+                    GridObject gridObj = _grid.GetGridObject(gridPosition);
                     if (gridObj == null) continue;
                     if (!gridObj.CanBuild()) continue;
                     gridObj.SetCanBuildColor();
@@ -960,7 +957,7 @@ namespace Nevelson.GridPlacementSystem
             {
                 foreach (Vector2Int gridPosition in gridPositionList)
                 {
-                    GridObject gridObj = _grid.GetGridObject(gridPosition.x, gridPosition.y);
+                    GridObject gridObj = _grid.GetGridObject(gridPosition);
                     if (gridObj == null) continue;
                     if (!gridObj.CanBuild()) continue;
                     gridObj.SetCannotBuildColor();
@@ -974,16 +971,31 @@ namespace Nevelson.GridPlacementSystem
         //functions for ghost. Not crazy about this but whatever. too coupled
         bool CheckSurroundingSpace(GridPlacementObjectSO gridPlacementObjectSO)
         {
-            _grid.GetXY(GetMouseWorldPosition(), out int x, out int y);
-            Vector2Int placedObjectOrigin = new Vector2Int(x, y);
-            List<Vector2Int> gridPositionList = gridPlacementObjectSO.GetGridPositionList(placedObjectOrigin, _dir);
-            foreach (Vector2Int gridPosition in gridPositionList)
+            if (gridPlacementObjectSO.UpgradeFrom == null)
             {
-                //if the surrounding tile is outside grid bounds or can't build
-                GridObject gridObj = _grid.GetGridObject(gridPosition.x, gridPosition.y);
-                if (gridObj == null || !gridObj.CanBuild()) return false;
+                Vector2Int placedObjectOrigin = _grid.GetXY(GetMouseWorldPosition());
+                List<Vector2Int> gridPositionList = gridPlacementObjectSO.GetGridPositionList(placedObjectOrigin, _dir);
+                foreach (Vector2Int gridPosition in gridPositionList)
+                {
+                    //if the surrounding tile is outside grid bounds or can't build
+                    GridObject gridObj = _grid.GetGridObject(gridPosition);
+                    if (gridObj == null || !gridObj.CanBuild()) return false;
+                }
+                return true;
             }
-            return true;
+            else
+            {
+                //TODO: THIS IS THE REST
+                Vector2Int placedObjectOrigin = _grid.GetXY(GetMouseWorldPosition());
+                List<Vector2Int> gridPositionList = gridPlacementObjectSO.GetGridPositionList(placedObjectOrigin, _dir);
+                foreach (Vector2Int gridPosition in gridPositionList)
+                {
+                    //if the surrounding tile is outside grid bounds or can't build
+                    GridObject gridObj = _grid.GetGridObject(gridPosition);
+                    if (gridObj == null || !gridObj.CanBuild()) return false;
+                }
+                return true;
+            }
         }
 
         void ShowOrHideGridTiles()
@@ -1013,9 +1025,9 @@ namespace Nevelson.GridPlacementSystem
             Vector3 mousePosition = GetMouseWorldPosition();
             if (_selectedGridObjectSO == null) return mousePosition;
 
-            _grid.GetXY(mousePosition, out int x, out int y);
+            Vector2Int xy = _grid.GetXY(mousePosition);
             Vector2Int rotationOffset = _selectedGridObjectSO.GetRotationOffset(_dir);
-            Vector3 placedObjectWorldPosition = _grid.GetWorldPosition(x, y) + new Vector3(rotationOffset.x, rotationOffset.y) * _grid.CellSize;
+            Vector3 placedObjectWorldPosition = _grid.GetWorldPosition(xy) + new Vector3(rotationOffset.x, rotationOffset.y) * _grid.CellSize;
             return placedObjectWorldPosition;
         }
         Quaternion GetPlacedObjectRotation()

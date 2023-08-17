@@ -45,11 +45,11 @@ namespace Nevelson.GridPlacementSystem
                 {
                     int index = x * grid.Height + y;
                     Vector3 quadSize = new Vector3(1, 1) * grid.CellSize;
-
-                    HeatMapGridObject gridGridObject = grid.GetGridObject(x, y);
+                    Vector2Int xy = new Vector2Int(x, y);
+                    HeatMapGridObject gridGridObject = grid.GetGridObject(new Vector2Int(x, y));
                     float gridValueNormalized = gridGridObject.GetValueNormalized();
                     Vector2 gridValueUV = new Vector2(gridValueNormalized, 0f);
-                    StaticFactory.AddToMeshArrays(vertices, uv, triangles, index, grid.GetWorldPosition(x, y) + quadSize * .5f, 0f, quadSize, gridValueUV, gridValueUV);
+                    StaticFactory.AddToMeshArrays(vertices, uv, triangles, index, grid.GetWorldPosition(xy) + quadSize * .5f, 0f, quadSize, gridValueUV, gridValueUV);
                 }
             }
 
