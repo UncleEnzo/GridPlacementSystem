@@ -93,5 +93,12 @@ namespace Nevelson.GridPlacementSystem
         {
             return placedObject == null;
         }
+
+        public bool CanUpgrade(GridPlacementObjectSO gridUpgradeFrom)
+        {
+            if (gridUpgradeFrom == null) return false;
+            if (placedObject == null) return false;
+            return placedObject.GridObjectSO == gridUpgradeFrom;
+        }
     }
 }

@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 9179346414099677398}
   m_Layer: 0
-  m_Name: house_1_ghost
+  m_Name: house_II_ghost
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -102,7 +102,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: 47402c94dbfb3864d8f0302035c05927, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 693d8f4005baedc4f8acaf5f0ca27c1b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0

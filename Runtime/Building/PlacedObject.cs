@@ -33,6 +33,8 @@ namespace Nevelson.GridPlacementSystem
             get => _id;
         }
 
+        public Vector2Int Origin { get => _origin; }
+
         public GridPlacementObjectSO GridObjectSO
         {
             get => _gridObjectSO;

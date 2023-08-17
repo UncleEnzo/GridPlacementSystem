@@ -491,6 +491,9 @@ namespace Nevelson.GridPlacementSystem
                 UpdateSurroundingTileColors,
                 UndoMoveDemolishTilesColors,
                 UpdateDestroyOrMovableTileColors,
+                _grid.GetXY,
+                _grid.GetGridObject,
+                ref _grid,
                 this);
         }
 
@@ -876,8 +879,20 @@ namespace Nevelson.GridPlacementSystem
             foreach (var gridObj in previousTiles)
             {
                 if (gridObj == null) continue;
-                if (!gridObj.CanBuild()) continue;
-                gridObj.SetVacantColor();
+                if (gridObj.CanBuild())
+                {
+                    gridObj.SetVacantColor();
+                }
+                //This is to reverse the color if you set an upgrade to GREEN
+                //object is not equal to null and you CAN'T build on it
+                else if (!gridObj.CanBuild())
+                {
+                    gridObj.SetOccupiedColor();
+                }
+                else
+                {
+                    gridObj.SetVacantColor();
+                }
             }
             previousTiles.Clear();
         }
@@ -938,33 +953,70 @@ namespace Nevelson.GridPlacementSystem
 
         void UpdateSurroundingTileColors()
         {
-            //set colors
-            Vector2Int origin = _grid.GetXY(GetMouseWorldPosition());
-            List<Vector2Int> gridPositionList = _selectedGridObjectSO.GetGridPositionList(origin, _dir);
             List<GridObject> newTiles = new List<GridObject>();
-            if (CheckSurroundingSpace(_selectedGridObjectSO))
+            if (_selectedGridObjectSO.UpgradeFrom == null)
             {
-                foreach (Vector2Int gridPosition in gridPositionList)
+                Vector2Int origin = _grid.GetXY(GetMouseWorldPosition());
+                List<Vector2Int> gridPositionList = _selectedGridObjectSO.GetGridPositionList(origin, _dir);
+                if (CheckSurroundingSpace(_selectedGridObjectSO))
                 {
-                    GridObject gridObj = _grid.GetGridObject(gridPosition);
-                    if (gridObj == null) continue;
-                    if (!gridObj.CanBuild()) continue;
-                    gridObj.SetCanBuildColor();
-                    newTiles.Add(gridObj);
+                    foreach (Vector2Int gridPosition in gridPositionList)
+                    {
+                        GridObject gridObj = _grid.GetGridObject(gridPosition);
+                        if (gridObj == null) continue;
+                        if (!gridObj.CanBuild()) continue;
+                        gridObj.SetCanBuildColor();
+                        newTiles.Add(gridObj);
+                    }
+                }
+                else
+                {
+                    foreach (Vector2Int gridPosition in gridPositionList)
+                    {
+                        GridObject gridObj = _grid.GetGridObject(gridPosition);
+                        if (gridObj == null) continue;
+                        if (!gridObj.CanBuild()) continue;
+                        gridObj.SetCannotBuildColor();
+                        newTiles.Add(gridObj);
+                    }
                 }
             }
             else
+            //Color settings for upgrading
             {
-                foreach (Vector2Int gridPosition in gridPositionList)
+                Vector2Int mouseOrigin = _grid.GetXY(GetMouseWorldPosition());
+                GridObject gridObj = _grid.GetGridObject(mouseOrigin);
+
+                //FAIL UPGRADE CHECK
+                //All grid positions of where the object is are RED
+                if (gridObj == null ||
+                    !gridObj.CanUpgrade(_selectedGridObjectSO.UpgradeFrom))
                 {
-                    GridObject gridObj = _grid.GetGridObject(gridPosition);
-                    if (gridObj == null) continue;
-                    if (!gridObj.CanBuild()) continue;
-                    gridObj.SetCannotBuildColor();
-                    newTiles.Add(gridObj);
+                    List<Vector2Int> gridPositionList = _selectedGridObjectSO.GetGridPositionList(mouseOrigin, _dir);
+                    foreach (Vector2Int gridPosition in gridPositionList)
+                    {
+                        GridObject gridObjRelativeToGhost = _grid.GetGridObject(gridPosition);
+                        if (gridObjRelativeToGhost == null) continue;
+                        if (!gridObjRelativeToGhost.CanBuild()) continue;
+                        gridObjRelativeToGhost.SetCannotBuildColor();
+                        newTiles.Add(gridObjRelativeToGhost);
+                    }
+                }
+                //CAN UPGRADE > takes the colors for the object it is hovering over and changes them
+                else
+                {
+                    //NOTE: if the dimensions of _selectedGridObjectSO and the upgrading object are not == then we have a problem
+                    List<Vector2Int> gridPositionList = _selectedGridObjectSO.GetGridPositionList(gridObj.PlacedObject.Origin, _dir);
+                    foreach (Vector2Int gridPosition in gridPositionList)
+                    {
+                        GridObject gridObjRelativeToOtherBuilding = _grid.GetGridObject(gridPosition);
+                        if (gridObjRelativeToOtherBuilding == null) continue;
+                        if (gridObjRelativeToOtherBuilding.CanBuild()) continue;
+                        gridObjRelativeToOtherBuilding.SetCanBuildColor();
+                        newTiles.Add(gridObjRelativeToOtherBuilding);
+                    }
                 }
             }
-
             previousTiles = newTiles;
         }
 
@@ -983,17 +1035,17 @@ namespace Nevelson.GridPlacementSystem
                 }
                 return true;
             }
+            //CHECKS IF YOU CAN UPGRADE
             else
             {
-                //TODO: THIS IS THE REST
                 Vector2Int placedObjectOrigin = _grid.GetXY(GetMouseWorldPosition());
-                List<Vector2Int> gridPositionList = gridPlacementObjectSO.GetGridPositionList(placedObjectOrigin, _dir);
-                foreach (Vector2Int gridPosition in gridPositionList)
+                GridObject gridObj = _grid.GetGridObject(placedObjectOrigin);
+                if (gridObj == null ||
+                    !gridObj.CanUpgrade(gridPlacementObjectSO.UpgradeFrom))
                 {
-                    //if the surrounding tile is outside grid bounds or can't build
-                    GridObject gridObj = _grid.GetGridObject(gridPosition);
-                    if (gridObj == null || !gridObj.CanBuild()) return false;
+                    return false;
                 }
+
                 return true;
             }
         }

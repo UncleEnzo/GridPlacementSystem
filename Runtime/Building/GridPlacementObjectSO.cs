@@ -64,6 +64,9 @@ namespace Nevelson.GridPlacementSystem
             }
         }
 
+        //Constructs a list of tile positions for this object Width/Height
+        //Then takes in the supplied offset to offset each tile by the coordinates supplied
+        //Ex: mouse pos + width/height of object
         public List<Vector2Int> GetGridPositionList(Vector2Int offset, Dir dir)
         {
             List<Vector2Int> VerticalGridPositionList(Vector2Int offset)

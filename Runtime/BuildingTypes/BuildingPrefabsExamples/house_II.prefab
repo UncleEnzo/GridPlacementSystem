@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 1344356654386532422}
   - component: {fileID: 2526879521279617528}
   m_Layer: 0
-  m_Name: house_1
+  m_Name: house_II
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -47,6 +47,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _isMovable: 0
   _isDestructable: 1
+  _useContructionState: 1
 --- !u!114 &2526879521279617528
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -154,7 +155,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: 47402c94dbfb3864d8f0302035c05927, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 693d8f4005baedc4f8acaf5f0ca27c1b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
