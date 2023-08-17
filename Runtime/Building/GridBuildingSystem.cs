@@ -879,8 +879,23 @@ namespace Nevelson.GridPlacementSystem
             //if the max placed is 0, the limit is infinite
             if (gridObjectSO.maxPlaced == 0) return true;
 
-            int placedObjCount = _placedGridObjects.Where(x => x.GridObjectSO == gridObjectSO).Count();
-            if (placedObjCount >= gridObjectSO.maxPlaced)
+            //used to recursively find all upgrades and test max object against all upgraded forms
+            List<GridPlacementObjectSO> FindAllUpgradeVersions(GridPlacementObjectSO gridObjectSO, List<GridPlacementObjectSO> upgrades)
+            {
+                upgrades.Add(gridObjectSO);
+                if (gridObjectSO.UpgradeFrom != null)
+                {
+                    return FindAllUpgradeVersions(gridObjectSO.UpgradeFrom, upgrades);
+                }
+
+                return upgrades;
+            }
+
+
+            List<GridPlacementObjectSO> objUpgradeVersions = FindAllUpgradeVersions(gridObjectSO, new List<GridPlacementObjectSO>());
+            int placedObjCount = _placedGridObjects.Where(x => objUpgradeVersions.Contains(x.GridObjectSO)).Count();
+
+            if (gridObjectSO.UpgradeFrom == null && placedObjCount >= gridObjectSO.maxPlaced)
             {
                 Debug.Log($"Cannot place more {gridObjectSO.name}. Max count {gridObjectSO.maxPlaced}. Number placed {placedObjCount}");
                 return false;
