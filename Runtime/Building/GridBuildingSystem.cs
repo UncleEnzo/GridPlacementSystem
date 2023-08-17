@@ -51,6 +51,8 @@ namespace Nevelson.GridPlacementSystem
 
         List<PlacedGridObject> _placedGridObjects = new List<PlacedGridObject>();
 
+        public BuildMode GBuildMode { get => buildMode; }
+
         BuildMode buildMode = BuildMode.BUILD;
         Grid<GridObject> _grid;
         List<GridObject> previousTiles = new List<GridObject>();
@@ -491,8 +493,6 @@ namespace Nevelson.GridPlacementSystem
                 UpdateSurroundingTileColors,
                 UndoMoveDemolishTilesColors,
                 UpdateDestroyOrMovableTileColors,
-                _grid.GetXY,
-                _grid.GetGridObject,
                 ref _grid,
                 this);
         }
@@ -620,37 +620,87 @@ namespace Nevelson.GridPlacementSystem
             UndoMoveDemolishTilesColors();
             UndoSelectedTilesColors();
 
-            Vector2Int placedObjectOrigin = _grid.GetXY(GetMouseWorldPosition());
-            Vector2Int rotationOffset = gridPlacementObjectSO.GetRotationOffset(_dir);
-            Vector3 placedObjectWorldPosition = _grid.GetWorldPosition(placedObjectOrigin) +
-                new Vector3(rotationOffset.x, rotationOffset.y) * _grid.CellSize;
-
-            GridObject gridObject = _grid.GetGridObject(placedObjectOrigin);
-            if (gridObject == null)
+            Vector2Int placedObjectOrigin;
+            PlacedObject placedObject;
+            if (gridPlacementObjectSO.UpgradeFrom == null ||
+                gridPlacementObjectSO.UpgradeFrom != null && buildMode == BuildMode.MOVE)
             {
-                error = "Could not find gridobject";
-                Debug.LogError(error);
-                return false;
+                placedObjectOrigin = _grid.GetXY(GetMouseWorldPosition());
+                Vector2Int rotationOffset = gridPlacementObjectSO.GetRotationOffset(_dir);
+                Vector3 placedObjectWorldPosition = _grid.GetWorldPosition(placedObjectOrigin) +
+                    new Vector3(rotationOffset.x, rotationOffset.y) * _grid.CellSize;
+
+                GridObject gridObject = _grid.GetGridObject(placedObjectOrigin);
+                if (gridObject == null)
+                {
+                    error = "Could not find gridobject";
+                    Debug.LogError(error);
+                    return false;
+                }
+
+                placedObject = PlacedObject.Create(
+                    id,
+                    placedObjectWorldPosition,
+                    placedObjectOrigin,
+                    _dir,
+                    gridPlacementObjectSO,
+                    gridObject,
+                    constructionState,
+                    ReloadBuilding);
+
+                //this rotates the sprite a bit more for 2D
+                placedObject.transform.rotation = Quaternion.Euler(0, 0, -gridPlacementObjectSO.GetRotationAngle(_dir));
+
+                //populate other tiles that take up the dimensions of the object with info that they are taken
+                List<Vector2Int> gridPositionList = gridPlacementObjectSO.GetGridPositionList(placedObjectOrigin, _dir);
+                foreach (Vector2Int gridPosition in gridPositionList)
+                {
+                    _grid.GetGridObject(gridPosition).SetPlacedObject(placedObject);
+                }
             }
-
-            PlacedObject placedObject = PlacedObject.Create(
-                id,
-                placedObjectWorldPosition,
-                placedObjectOrigin,
-                _dir,
-                gridPlacementObjectSO,
-                gridObject,
-                constructionState,
-                ReloadBuilding);
-
-            //this rotates the sprite a bit more for 2D
-            placedObject.transform.rotation = Quaternion.Euler(0, 0, -gridPlacementObjectSO.GetRotationAngle(_dir));
-
-            //populate other tiles that take up the dimensions of the object with info that they are taken
-            List<Vector2Int> gridPositionList = gridPlacementObjectSO.GetGridPositionList(placedObjectOrigin, _dir);
-            foreach (Vector2Int gridPosition in gridPositionList)
+            //upgrade
+            else
             {
-                _grid.GetGridObject(gridPosition).SetPlacedObject(placedObject);
+                placedObjectOrigin = _grid.GetXY(GetMouseWorldPosition());
+                GridObject gridObj = _grid.GetGridObject(placedObjectOrigin);
+                if (gridObj == null)
+                {
+                    error = "Could not find gridobject";
+                    Debug.LogError(error);
+                    return false;
+                }
+
+                //need to cache all these because we're about to delete
+                var dir = gridObj.PlacedObject.Dir;
+                var origin = gridObj.PlacedObject.Origin;
+                Vector2Int rotationOffset = gridPlacementObjectSO.GetRotationOffset(dir);
+                Vector2 replacePosition = _grid.GetWorldPosition(origin) + new Vector3(rotationOffset.x, rotationOffset.y) * _grid.CellSize;
+
+                if (!Demolish(false, gridObj, out error))
+                {
+                    Debug.Log(error);
+                    return false;
+                }
+
+                placedObject = PlacedObject.Create(
+                    id,
+                    replacePosition,
+                    origin,
+                    dir,
+                    gridPlacementObjectSO,
+                    gridObj,
+                    constructionState,
+                    ReloadBuilding);
+
+                //this rotates the sprite a bit more for 2D
+                placedObject.transform.rotation = Quaternion.Euler(0, 0, -gridPlacementObjectSO.GetRotationAngle(_dir));
+
+                //populate other tiles that take up the dimensions of the object with info that they are taken
+                List<Vector2Int> gridPositionList = gridPlacementObjectSO.GetGridPositionList(origin, dir);
+                foreach (Vector2Int gridPosition in gridPositionList)
+                {
+                    _grid.GetGridObject(gridPosition).SetPlacedObject(placedObject);
+                }
             }
 
             //Play build sound
@@ -954,7 +1004,8 @@ namespace Nevelson.GridPlacementSystem
         void UpdateSurroundingTileColors()
         {
             List<GridObject> newTiles = new List<GridObject>();
-            if (_selectedGridObjectSO.UpgradeFrom == null)
+            if (_selectedGridObjectSO.UpgradeFrom == null ||
+                _selectedGridObjectSO.UpgradeFrom != null && buildMode == BuildMode.MOVE)
             {
                 Vector2Int origin = _grid.GetXY(GetMouseWorldPosition());
                 List<Vector2Int> gridPositionList = _selectedGridObjectSO.GetGridPositionList(origin, _dir);
@@ -988,7 +1039,6 @@ namespace Nevelson.GridPlacementSystem
                 GridObject gridObj = _grid.GetGridObject(mouseOrigin);
 
                 //FAIL UPGRADE CHECK
-                //All grid positions of where the object is are RED
                 if (gridObj == null ||
                     !gridObj.CanUpgrade(_selectedGridObjectSO.UpgradeFrom))
                 {
@@ -1006,8 +1056,10 @@ namespace Nevelson.GridPlacementSystem
                 else
                 {
                     //NOTE: if the dimensions of _selectedGridObjectSO and the upgrading object are not == then we have a problem
+
+                    Debug.Log("CALLING THIS");
+
                     List<Vector2Int> gridPositionList = _selectedGridObjectSO.GetGridPositionList(gridObj.PlacedObject.Origin, _dir);
-                    Debug.Log($"ORIGIN IN CHECK {gridObj.PlacedObject.Origin}");
                     foreach (Vector2Int gridPosition in gridPositionList)
                     {
                         GridObject gridObjRelativeToOtherBuilding = _grid.GetGridObject(gridPosition);
@@ -1024,7 +1076,9 @@ namespace Nevelson.GridPlacementSystem
         //functions for ghost. Not crazy about this but whatever. too coupled
         bool CheckSurroundingSpace(GridPlacementObjectSO gridPlacementObjectSO)
         {
-            if (gridPlacementObjectSO.UpgradeFrom == null)
+            //uses normal logic if there is no UpgradeFrom field OR if there is but we're moving the building
+            if (gridPlacementObjectSO.UpgradeFrom == null ||
+                gridPlacementObjectSO.UpgradeFrom != null && buildMode == BuildMode.MOVE)
             {
                 Vector2Int placedObjectOrigin = _grid.GetXY(GetMouseWorldPosition());
                 List<Vector2Int> gridPositionList = gridPlacementObjectSO.GetGridPositionList(placedObjectOrigin, _dir);

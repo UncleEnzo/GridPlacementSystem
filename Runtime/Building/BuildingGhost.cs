@@ -15,12 +15,11 @@ namespace Nevelson.GridPlacementSystem
         Func<Quaternion> _placedObjectRotation;
         Func<GridPlacementObjectSO, bool> _checkSurroundingSpace;
         Func<GridPlacementObjectSO> _selectedGridObject;
-        Func<Vector3, Vector2Int> _getXY;
-        Func<Vector2Int, GridObject> _getGridObject;
         Action _undoPreviousTileColors;
         Action _updateTileColors;
         Action _undoMoveDemolishTileColors;
         Action _updateMoveDemolishTileColors;
+        GridBuildingSystem _gbs;
 
 
         public void Init(Func<Vector3> mouseWorldSnappedPosition,
@@ -31,8 +30,6 @@ namespace Nevelson.GridPlacementSystem
                     Action updateTileColors,
                     Action undoMoveDemolishTileColors,
                     Action updateMoveDemolishTileColors,
-                    Func<Vector3, Vector2Int> getXY,
-                    Func<Vector2Int, GridObject> getGridObject,
                     ref Grid<GridObject> grid,
                     GridBuildingSystem gbs)
         {
@@ -43,11 +40,10 @@ namespace Nevelson.GridPlacementSystem
             this._undoPreviousTileColors = undoPreviousTileColors;
             this._updateTileColors = updateTileColors;
             this._undoMoveDemolishTileColors = undoMoveDemolishTileColors;
-            this._getXY = getXY;
-            this._getGridObject = getGridObject;
             this._grid = grid;
             this._updateMoveDemolishTileColors = updateMoveDemolishTileColors;
             RefreshVisual();
+            this._gbs = gbs;
             gbs.OnSelectedChanged += Instance_OnSelectedChanged;
         }
 
@@ -66,29 +62,22 @@ namespace Nevelson.GridPlacementSystem
             {
                 targetPosition = _mouseWorldSnappedPosition();
             }
+            else if (selectedGridPlacementSO.UpgradeFrom != null && _gbs.GBuildMode == BuildMode.MOVE)
+            {
+                targetPosition = _mouseWorldSnappedPosition();
+            }
             //IF IT"S UPGRADEABLE SNAPS TO THIS LOCATION!
-            //LAST BUG >> IT'S SETTING TO THE CENTER OF THE ENTIRE MAP
             else if (selectedGridPlacementSO.UpgradeFrom != null)
             {
-                //Vector2Int mouseOrigin = _getXY(GetMouseWorldPosition());
-                //GridObject gridObj = _getGridObject(mouseOrigin);
                 Vector2Int mouseOrigin = _grid.GetXY(GetMouseWorldPosition());
                 GridObject gridObj = _grid.GetGridObject(mouseOrigin);
                 if (gridObj != null &&
                     gridObj.CanUpgrade(selectedGridPlacementSO.UpgradeFrom))
                 {
-
-
-                    //I THINK IT'S ALL GOOD, BUT THE BUG IS WE'RE NOT GETTING THE RIGHT ONE
-
-                    Debug.Log($"ORIGIN IN GHOST {gridObj.PlacedObject.Origin}");
                     targetPosition = _grid.GetWorldPosition(gridObj.PlacedObject.Origin);
-                    //targetPosition = new Vector3(gridObj.PlacedObject.Origin.x, gridObj.PlacedObject.Origin.y);
                 }
                 else
                 {
-                    Debug.Log("HITTING THIS");
-                    Debug.Log("Grid obj == null? " + gridObj == null);
                     targetPosition = _mouseWorldSnappedPosition();
                 }
             }

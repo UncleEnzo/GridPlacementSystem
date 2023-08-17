@@ -17,4 +17,6 @@ MonoBehaviour:
   ghost: {fileID: 9179346414099677398, guid: 6a7e1590417694f4b9dd273a66d6e631, type: 3}
   width: 7
   height: 8
+  UpgradeFrom: {fileID: 0}
+  IsRotatable: 1
   maxPlaced: 1
