@@ -8,7 +8,8 @@ namespace Nevelson.GridPlacementSystem
         [SerializeField] PreInitObject[] preInitObjs;
         [SerializeField] GridPlacementObjectSO house;
         [SerializeField] GridPlacementObjectSO market;
-        [SerializeField] GridPlacementObjectSO houseUPGRADE;
+        [SerializeField] GridPlacementObjectSO houseII;
+        [SerializeField] GridPlacementObjectSO houseIII;
         [SerializeField] GameObject gbsPrefab;
         Grid<HeatMapGridObject> _heatGrid;
         Grid<StringGridObject> _stringGrid;
@@ -154,7 +155,12 @@ namespace Nevelson.GridPlacementSystem
 
             if (Input.GetKeyDown(KeyCode.Alpha3))
             {
-                GBS.ChangeSelectedBuildObject(houseUPGRADE, out string error);
+                GBS.ChangeSelectedBuildObject(houseII, out string error);
+            }
+
+            if (Input.GetKeyDown(KeyCode.Alpha4))
+            {
+                GBS.ChangeSelectedBuildObject(houseIII, out string error);
             }
 
             //not in the list currently

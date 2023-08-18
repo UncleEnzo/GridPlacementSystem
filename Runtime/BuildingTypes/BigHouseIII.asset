@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c01229f3ad9b00043ba3b9eb8f95fb75, type: 3}
+  m_Name: BigHouseIII
+  m_EditorClassIdentifier: 
+  nameString: BH3
+  prefab: {fileID: 9179346414099677398, guid: 513adf3a014ba7142a9a410f5f240ecb, type: 3}
+  ghost: {fileID: 9179346414099677398, guid: d3e5ac8cf2454b744947a9cad15bd8b7, type: 3}
+  width: 7
+  height: 8
+  UpgradeFrom: {fileID: 11400000, guid: b8cdd2c91cf8bbc478ea0d7b781af946, type: 2}
+  IsRotatable: 1
+  maxPlaced: 1

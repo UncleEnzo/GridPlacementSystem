@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -880,24 +879,48 @@ namespace Nevelson.GridPlacementSystem
             if (gridObjectSO.maxPlaced == 0) return true;
 
             //used to recursively find all upgrades and test max object against all upgraded forms
-            List<GridPlacementObjectSO> FindAllUpgradeVersions(GridPlacementObjectSO gridObjectSO, List<GridPlacementObjectSO> upgrades)
+            GridPlacementObjectSO FindUpgradeBase(GridPlacementObjectSO gridObjectSO)
             {
-                upgrades.Add(gridObjectSO);
-                if (gridObjectSO.UpgradeFrom != null)
+                int retryCounter = 100;
+                GridPlacementObjectSO baseObject = gridObjectSO;
+                while (baseObject.UpgradeFrom != null)
                 {
-                    return FindAllUpgradeVersions(gridObjectSO.UpgradeFrom, upgrades);
+                    baseObject = baseObject.UpgradeFrom;
+                    retryCounter--;
+                    if (retryCounter <= 0)
+                    {
+                        Debug.LogError("Breaking endless loop trying to get upgradeFrom base");
+                        break;
+                    }
                 }
-
-                return upgrades;
+                return baseObject;
             }
 
+            GridPlacementObjectSO baseGridObj = FindUpgradeBase(gridObjectSO);
 
-            List<GridPlacementObjectSO> objUpgradeVersions = FindAllUpgradeVersions(gridObjectSO, new List<GridPlacementObjectSO>());
-            int placedObjCount = _placedGridObjects.Where(x => objUpgradeVersions.Contains(x.GridObjectSO)).Count();
+            //foreach obj in placedGridObjects
+            //if the object == base then ++
+            //or traverse EACH object's UpgradeFrom stack to base and check EACH layer for if object == base then ++
+            int placedObjCount = 0;
+            foreach (var placedObj in _placedGridObjects)
+            {
+                GridPlacementObjectSO basePlacedObj = FindUpgradeBase(placedObj.GridObjectSO);
+                if (basePlacedObj == baseGridObj)
+                {
+                    placedObjCount++;
+                }
+            }
 
+            //I think these are still correct
             if (gridObjectSO.UpgradeFrom == null && placedObjCount >= gridObjectSO.maxPlaced)
             {
-                Debug.Log($"Cannot place more {gridObjectSO.name}. Max count {gridObjectSO.maxPlaced}. Number placed {placedObjCount}");
+                Debug.Log($"Non-Upgrade: Cannot place more {gridObjectSO.name}. Max count {gridObjectSO.maxPlaced}. Number placed {placedObjCount}");
+                return false;
+            }
+
+            if (gridObjectSO.UpgradeFrom != null && placedObjCount > gridObjectSO.maxPlaced)
+            {
+                Debug.Log($"Upgrade: Cannot place more {gridObjectSO.name}. Max count {gridObjectSO.maxPlaced}. Number placed {placedObjCount}");
                 return false;
             }
             return true;
@@ -1071,9 +1094,6 @@ namespace Nevelson.GridPlacementSystem
                 else
                 {
                     //NOTE: if the dimensions of _selectedGridObjectSO and the upgrading object are not == then we have a problem
-
-                    Debug.Log("CALLING THIS");
-
                     List<Vector2Int> gridPositionList = _selectedGridObjectSO.GetGridPositionList(gridObj.PlacedObject.Origin, _dir);
                     foreach (Vector2Int gridPosition in gridPositionList)
                     {
