@@ -19,4 +19,4 @@ MonoBehaviour:
   height: 8
   UpgradeFrom: {fileID: 0}
   IsRotatable: 1
-  maxPlaced: 1
+  maxPlaced: 2
