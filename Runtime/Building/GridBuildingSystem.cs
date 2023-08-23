@@ -730,7 +730,7 @@ namespace Nevelson.GridPlacementSystem
 
             PlacedObject placedObject = gridObject.PlacedObject;
 
-            if (!isMoveDemolish || isUpgrade && !placedObject.IsDestructable)
+            if (!isMoveDemolish || !isUpgrade && !placedObject.IsDestructable)
             {
                 error = "Object is indestructable";
                 Debug.Log(error);
