@@ -342,7 +342,7 @@ namespace Nevelson.GridPlacementSystem
             {
                 cachedDemolishedObjID = gridObject.PlacedObject.ID;
             }
-            if (!Demolish(false, gridObject, out error))
+            if (!Demolish(false, false, gridObject, out error))
             {
                 Debug.Log(error);
                 return false;
@@ -530,7 +530,7 @@ namespace Nevelson.GridPlacementSystem
 
             SelectGridObject(gridObject.PlacedObject.GridObjectSO);
 
-            if (!Demolish(true, gridObject, out error))
+            if (!Demolish(true, false, gridObject, out error))
             {
                 return false;
             }
@@ -602,9 +602,8 @@ namespace Nevelson.GridPlacementSystem
                 return false;
             }
 
-            if (!CheckSurroundingSpace(gridPlacementObjectSO))
+            if (!CheckSurroundingSpace(gridPlacementObjectSO, out error))
             {
-                error = "Space is occupied";
                 Debug.Log(error);
                 return false;
             }
@@ -675,7 +674,7 @@ namespace Nevelson.GridPlacementSystem
                 Vector2Int rotationOffset = gridPlacementObjectSO.GetRotationOffset(dir);
                 Vector2 replacePosition = _grid.GetWorldPosition(origin) + new Vector3(rotationOffset.x, rotationOffset.y) * _grid.CellSize;
 
-                if (!Demolish(false, gridObj, out error))
+                if (!Demolish(false, true, gridObj, out error))
                 {
                     Debug.Log(error);
                     return false;
@@ -719,7 +718,7 @@ namespace Nevelson.GridPlacementSystem
             return true;
         }
 
-        bool Demolish(bool isMoveDemolish, GridObject gridObject, out string error)
+        bool Demolish(bool isMoveDemolish, bool isUpgrade, GridObject gridObject, out string error)
         {
             error = "";
             if (gridObject == null || gridObject.PlacedObject == null)
@@ -731,7 +730,7 @@ namespace Nevelson.GridPlacementSystem
 
             PlacedObject placedObject = gridObject.PlacedObject;
 
-            if (!isMoveDemolish && !placedObject.IsDestructable)
+            if (!isMoveDemolish || isUpgrade && !placedObject.IsDestructable)
             {
                 error = "Object is indestructable";
                 Debug.Log(error);
@@ -833,7 +832,7 @@ namespace Nevelson.GridPlacementSystem
             }
 
             //not doing verify cause we want this done even on NON displayed grids
-            if (!Demolish(true, placedGridObject.PlacedObject.GridObject, out string error))
+            if (!Demolish(true, true, placedGridObject.PlacedObject.GridObject, out string error))
             {
                 Debug.Log(error);
                 return null;
@@ -1047,7 +1046,7 @@ namespace Nevelson.GridPlacementSystem
             {
                 Vector2Int origin = _grid.GetXY(GetMouseWorldPosition());
                 List<Vector2Int> gridPositionList = _selectedGridObjectSO.GetGridPositionList(origin, _dir);
-                if (CheckSurroundingSpace(_selectedGridObjectSO))
+                if (CheckSurroundingSpace(_selectedGridObjectSO, out string error))
                 {
                     foreach (Vector2Int gridPosition in gridPositionList)
                     {
@@ -1109,8 +1108,9 @@ namespace Nevelson.GridPlacementSystem
         }
 
         //functions for ghost. Not crazy about this but whatever. too coupled
-        bool CheckSurroundingSpace(GridPlacementObjectSO gridPlacementObjectSO)
+        bool CheckSurroundingSpace(GridPlacementObjectSO gridPlacementObjectSO, out string error)
         {
+            error = "";
             //uses normal logic if there is no UpgradeFrom field OR if there is but we're moving the building
             if (gridPlacementObjectSO.UpgradeFrom == null ||
                 gridPlacementObjectSO.UpgradeFrom != null && buildMode == BuildMode.MOVE)
@@ -1121,7 +1121,11 @@ namespace Nevelson.GridPlacementSystem
                 {
                     //if the surrounding tile is outside grid bounds or can't build
                     GridObject gridObj = _grid.GetGridObject(gridPosition);
-                    if (gridObj == null || !gridObj.CanBuild()) return false;
+                    if (gridObj == null || !gridObj.CanBuild())
+                    {
+                        error = "Space is occupied";
+                        return false;
+                    }
                 }
                 return true;
             }
@@ -1133,6 +1137,13 @@ namespace Nevelson.GridPlacementSystem
                 if (gridObj == null ||
                     !gridObj.CanUpgrade(gridPlacementObjectSO.UpgradeFrom))
                 {
+                    error = "Space is not upgradable";
+                    return false;
+                }
+
+                if (gridObj.PlacedObject.ConstructionState != ConstructionState.BUILT)
+                {
+                    error = "Cannot upgrade until construction complete";
                     return false;
                 }
 

@@ -13,7 +13,7 @@ namespace Nevelson.GridPlacementSystem
 
         Func<Vector3> _mouseWorldSnappedPosition;
         Func<Quaternion> _placedObjectRotation;
-        Func<GridPlacementObjectSO, bool> _checkSurroundingSpace;
+        Func<GridPlacementObjectSO, string, bool> _checkSurroundingSpace;
         Func<GridPlacementObjectSO> _selectedGridObject;
         Action _undoPreviousTileColors;
         Action _updateTileColors;
@@ -21,10 +21,11 @@ namespace Nevelson.GridPlacementSystem
         Action _updateMoveDemolishTileColors;
         GridBuildingSystem _gbs;
 
+        public delegate V Func<T, U, V>(T input, out U output);
 
         public void Init(Func<Vector3> mouseWorldSnappedPosition,
                     Func<Quaternion> placedObjectRotation,
-                    Func<GridPlacementObjectSO, bool> checkSurroundingSpace,
+                    Func<GridPlacementObjectSO, string, bool> checkSurroundingSpace,
                     Func<GridPlacementObjectSO> selectedGridObject,
                     Action undoPreviousTileColors,
                     Action updateTileColors,
@@ -110,7 +111,7 @@ namespace Nevelson.GridPlacementSystem
         {
             if (visual == null) return;
             var sr = visual.GetComponentInChildren<SpriteRenderer>();
-            sr.material = _checkSurroundingSpace(_selectedGridObject()) ?
+            sr.material = _checkSurroundingSpace(_selectedGridObject(), out string error) ?
                 canPlace : cannotPlace;
         }
 
