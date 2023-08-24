@@ -419,14 +419,14 @@ namespace Nevelson.GridPlacementSystem
                 out PlacedGridObject preInitedPlacedObject)
             {
                 preInitedPlacedObject = null;
-                //Vector2Int tilePosWithTransOffset = preInitObject.TilePosition + Vector2Int.FloorToInt(transform.position);
+                Vector2Int tilePosWithTransOffset = preInitObject.TilePosition + Vector2Int.FloorToInt(transform.position);
 
-                if (!CheckSurroundingSpaceAtPos(preInitObject.TilePosition, preInitObject.TilePosition, preInitObject))
+                if (!CheckSurroundingSpaceAtPos(tilePosWithTransOffset, preInitObject.TilePosition, preInitObject))
                 {
                     return false;
                 }
 
-                Vector2Int placedObjectOrigin = _grid.GetXY((Vector2)preInitObject.TilePosition);
+                Vector2Int placedObjectOrigin = _grid.GetXY((Vector2)tilePosWithTransOffset);
                 Vector2Int rotationOffset = preInitObject.GridObject.GetRotationOffset(preInitObject.Dir);
                 Vector3 placedObjectWorldPosition = _grid.GetWorldPosition(placedObjectOrigin) +
                     new Vector3(rotationOffset.x, rotationOffset.y) * _grid.CellSize;
