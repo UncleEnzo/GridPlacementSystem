@@ -637,14 +637,14 @@ namespace Nevelson.GridPlacementSystem
                 }
 
                 placedObject = PlacedObject.Create(
-                    id,
-                    placedObjectWorldPosition,
-                    placedObjectOrigin,
-                    _dir,
-                    gridPlacementObjectSO,
-                    gridObject,
-                    constructionState,
-                    ReloadBuilding);
+                    id: id,
+                    worldPosition: placedObjectWorldPosition,
+                    origin: placedObjectOrigin,
+                    dir: _dir,
+                    gridObjectSO: gridPlacementObjectSO,
+                    gridObject: gridObject,
+                    constructionState: constructionState,
+                    reloadBuilding: ReloadBuilding);
 
                 //this rotates the sprite a bit more for 2D
                 placedObject.transform.rotation = Quaternion.Euler(0, 0, -gridPlacementObjectSO.GetRotationAngle(_dir));
@@ -670,9 +670,9 @@ namespace Nevelson.GridPlacementSystem
 
                 //need to cache all these because we're about to delete
                 var dir = gridObj.PlacedObject.Dir;
-                var origin = gridObj.PlacedObject.Origin;
+                placedObjectOrigin = gridObj.PlacedObject.Origin;//setting this here for later
                 Vector2Int rotationOffset = gridPlacementObjectSO.GetRotationOffset(dir);
-                Vector2 replacePosition = _grid.GetWorldPosition(origin) + new Vector3(rotationOffset.x, rotationOffset.y) * _grid.CellSize;
+                Vector2 replacePosition = _grid.GetWorldPosition(placedObjectOrigin) + new Vector3(rotationOffset.x, rotationOffset.y) * _grid.CellSize;
 
                 if (!Demolish(false, true, gridObj, out error))
                 {
@@ -683,7 +683,7 @@ namespace Nevelson.GridPlacementSystem
                 placedObject = PlacedObject.Create(
                     id,
                     replacePosition,
-                    origin,
+                    placedObjectOrigin,
                     dir,
                     gridPlacementObjectSO,
                     gridObj,
@@ -694,7 +694,7 @@ namespace Nevelson.GridPlacementSystem
                 placedObject.transform.rotation = Quaternion.Euler(0, 0, -gridPlacementObjectSO.GetRotationAngle(_dir));
 
                 //populate other tiles that take up the dimensions of the object with info that they are taken
-                List<Vector2Int> gridPositionList = gridPlacementObjectSO.GetGridPositionList(origin, dir);
+                List<Vector2Int> gridPositionList = gridPlacementObjectSO.GetGridPositionList(placedObjectOrigin, dir);
                 foreach (Vector2Int gridPosition in gridPositionList)
                 {
                     _grid.GetGridObject(gridPosition).SetPlacedObject(placedObject);
