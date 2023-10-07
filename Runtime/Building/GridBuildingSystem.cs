@@ -1205,7 +1205,7 @@ namespace Nevelson.GridPlacementSystem
             _OnMove.AddListener(action);
         }
 
-        public void SubscribeUndoMoveSuccess(UnityAction<PlacedGridObject> action)
+        public void SubscribeOnUndoMoveSuccess(UnityAction<PlacedGridObject> action)
         {
             _OnUndoMove.AddListener(action);
         }
@@ -1225,7 +1225,7 @@ namespace Nevelson.GridPlacementSystem
             _OnMove.RemoveListener(action);
         }
 
-        public void UnSubscribeUndoMoveSuccess(UnityAction<PlacedGridObject> action)
+        public void UnsubscribeOnUndoMoveSuccess(UnityAction<PlacedGridObject> action)
         {
             _OnUndoMove.RemoveListener(action);
         }

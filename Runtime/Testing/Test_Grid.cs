@@ -40,12 +40,12 @@ namespace Nevelson.GridPlacementSystem
         void Start()
         {
             GBS.AddPreInitObjects(preInitObjs);
-            GBS.SubscribeUndoMoveSuccess(UndoMove);
+            GBS.SubscribeOnUndoMoveSuccess(UndoMove);
         }
 
         void OnDestroy()
         {
-            GBS.UnSubscribeUndoMoveSuccess(UndoMove);
+            GBS.UnsubscribeOnUndoMoveSuccess(UndoMove);
         }
 
         void Update()
