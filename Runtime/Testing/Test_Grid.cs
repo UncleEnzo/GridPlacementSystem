@@ -32,10 +32,20 @@ namespace Nevelson.GridPlacementSystem
             }
         }
 
+        UnityAction<PlacedGridObject> UndoMove = (PlacedGridObject) =>
+        {
+            Debug.Log("Undo Move HAPPENED");
+        };
 
         void Start()
         {
             GBS.AddPreInitObjects(preInitObjs);
+            GBS.SubscribeUndoMoveSuccess(UndoMove);
+        }
+
+        void OnDestroy()
+        {
+            GBS.UnSubscribeUndoMoveSuccess(UndoMove);
         }
 
         void Update()

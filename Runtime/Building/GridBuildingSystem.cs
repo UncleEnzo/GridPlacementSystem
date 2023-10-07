@@ -34,6 +34,7 @@ namespace Nevelson.GridPlacementSystem
 
         public UnityEvent<PlacedGridObject> _OnBuild;
         public UnityEvent<PlacedGridObject> _OnMove;
+        public UnityEvent<PlacedGridObject> _OnUndoMove;
         public UnityEvent<string> _OnDestroy;
 
         [Header("The object that gets auto selected when setting to build mode")]
@@ -317,8 +318,9 @@ namespace Nevelson.GridPlacementSystem
             }
 
             Debug.Log($"Build Mode is: {buildMode}, undoing move of {_selectedGridObjectSO.name}");
-            UndoSelectedMoveObject();
+            PlacedGridObject placedGridObject = UndoSelectedMoveObject();
             DeselectBuildObject();
+            _OnUndoMove?.Invoke(placedGridObject);
             return true;
         }
 
@@ -539,14 +541,15 @@ namespace Nevelson.GridPlacementSystem
             return true;
         }
 
-        void UndoSelectedMoveObject()
+        PlacedGridObject UndoSelectedMoveObject()
         {
-            if (!_movingObject) return;
+            if (!_movingObject) return null;
             Debug.Log("Deselecting object to move");
             UndoSelectedTilesColors();
             DeselectBuildObject();
-            UndoLastDemolish();
+            PlacedGridObject placedGridObject = UndoLastDemolish();
             _movingObject = false;
+            return placedGridObject;
         }
 
         bool Move(out PlacedGridObject placedGridObject, out string error)
@@ -563,6 +566,7 @@ namespace Nevelson.GridPlacementSystem
             {
                 return false;
             }
+
             placedGridObject = _placedGridObject;
             _movingObject = false;
             _lastDemolishPlaceData = null;
@@ -1183,6 +1187,7 @@ namespace Nevelson.GridPlacementSystem
             Vector3 placedObjectWorldPosition = _grid.GetWorldPosition(xy) + new Vector3(rotationOffset.x, rotationOffset.y) * _grid.CellSize;
             return placedObjectWorldPosition;
         }
+
         Quaternion GetPlacedObjectRotation()
         {
             return _selectedGridObjectSO == null ?
@@ -1200,6 +1205,11 @@ namespace Nevelson.GridPlacementSystem
             _OnMove.AddListener(action);
         }
 
+        public void SubscribeUndoMoveSuccess(UnityAction<PlacedGridObject> action)
+        {
+            _OnUndoMove.AddListener(action);
+        }
+
         public void SubscribeOnDestroySuccess(UnityAction<string> action)
         {
             _OnDestroy.AddListener(action);
@@ -1213,6 +1223,11 @@ namespace Nevelson.GridPlacementSystem
         public void UnsubscribeOnMoveSuccess(UnityAction<PlacedGridObject> action)
         {
             _OnMove.RemoveListener(action);
+        }
+
+        public void UnSubscribeUndoMoveSuccess(UnityAction<PlacedGridObject> action)
+        {
+            _OnUndoMove.RemoveListener(action);
         }
 
         public void UnsubscribeOnDestroySuccess(UnityAction<string> action)
